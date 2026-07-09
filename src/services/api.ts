@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://localhost:7136/api',  // update port to match your .NET project
+    baseURL: import.meta.env.VITE_API_URL || 'https://localhost:7001/api',  // update port to match your .NET project
 });
 
 // Attach JWT token to every request
