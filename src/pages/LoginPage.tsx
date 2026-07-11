@@ -29,7 +29,6 @@ export default function LoginPage() {
 
             const { data } = await api.post(endpoint, payload);
 
-            // Fetch profile to get full user object
             const profileRes = await api.get('/auth/profile', {
                 headers: { Authorization: `Bearer ${data.token}` }
             });
@@ -46,7 +45,6 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                {/* Logo */}
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold">
                         Invoice<span className="text-primary">PK</span>
@@ -72,17 +70,17 @@ export default function LoginPage() {
                             <>
                                 <div>
                                     <label className="label">Full Name</label>
-                                    <input className="input" name="fullName" placeholder="Gohar Rehman"
+                                    <input className="input" name="fullName" placeholder="e.g. Ahmed Khan"
                                         value={form.fullName} onChange={handleChange} required />
                                 </div>
                                 <div>
                                     <label className="label">Business Name</label>
-                                    <input className="input" name="businessName" placeholder="Gohar Dev Studio"
+                                    <input className="input" name="businessName" placeholder="e.g. Khan Digital Services"
                                         value={form.businessName} onChange={handleChange} />
                                 </div>
                                 <div>
                                     <label className="label">Phone</label>
-                                    <input className="input" name="phone" placeholder="0315-5972494"
+                                    <input className="input" name="phone" placeholder="e.g. 0300-1234567"
                                         value={form.phone} onChange={handleChange} />
                                 </div>
                             </>
@@ -96,7 +94,7 @@ export default function LoginPage() {
 
                         <div>
                             <label className="label">Password</label>
-                            <input className="input" name="password" type="password" placeholder="••••••••"
+                            <input className="input" name="password" type="password" placeholder="At least 6 characters"
                                 value={form.password} onChange={handleChange} required />
                         </div>
 
