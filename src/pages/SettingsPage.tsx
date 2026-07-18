@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Upload, Trash2, ImageOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -6,6 +7,10 @@ export default function SettingsPage() {
     const { user, login } = useAuth();
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [logoError, setLogoError] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const [form, setForm] = useState({
         fullName: '', businessName: '', phone: '', address: '', ntn: ''
     });
@@ -20,20 +25,67 @@ export default function SettingsPage() {
         });
     }, [user]);
 
+    const refreshUser = async () => {
+        const { data } = await api.get('/auth/profile');
+        const token = localStorage.getItem('token')!;
+        login(token, data);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
         setSuccess(false);
         try {
             await api.put('/auth/profile', form);
-            // Refresh user in context
-            const { data } = await api.get('/auth/profile');
-            const token = localStorage.getItem('token')!;
-            login(token, data);
+            await refreshUser();
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setLogoError('');
+
+        // Basic client-side checks (backend re-validates too)
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            setLogoError('Please upload a PNG, JPG, or WEBP image.');
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            setLogoError('Logo must be smaller than 2MB.');
+            return;
+        }
+
+        setUploadingLogo(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            await api.post('/auth/logo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            await refreshUser();
+        } catch (err: any) {
+            setLogoError(err.response?.data?.message ?? 'Failed to upload logo.');
+        } finally {
+            setUploadingLogo(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveLogo = async () => {
+        if (!confirm('Remove your business logo?')) return;
+        setUploadingLogo(true);
+        try {
+            await api.delete('/auth/logo');
+            await refreshUser();
+        } finally {
+            setUploadingLogo(false);
         }
     };
 
@@ -52,6 +104,62 @@ export default function SettingsPage() {
                 </div>
             )}
 
+            {/* Logo Upload */}
+            <div className="card p-6 mb-4">
+                <h2 className="font-semibold text-gray-900 mb-1">Business Logo</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                    Appears on your invoice PDFs. PNG, JPG, or WEBP — max 2MB.
+                </p>
+
+                {logoError && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-2 mb-4">
+                        {logoError}
+                    </div>
+                )}
+
+                <div className="flex items-center gap-5">
+                    {/* Preview */}
+                    <div className="w-20 h-20 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                        {user?.logoUrl ? (
+                            <img src={user.logoUrl} alt="Business logo" className="w-full h-full object-contain" />
+                        ) : (
+                            <ImageOff size={24} className="text-gray-300" />
+                        )}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingLogo}
+                            className="btn-secondary flex items-center gap-2 text-sm"
+                        >
+                            <Upload size={14} />
+                            {uploadingLogo ? 'Uploading...' : user?.logoUrl ? 'Replace Logo' : 'Upload Logo'}
+                        </button>
+                        {user?.logoUrl && (
+                            <button
+                                type="button"
+                                onClick={handleRemoveLogo}
+                                disabled={uploadingLogo}
+                                className="btn-secondary flex items-center gap-2 text-sm text-red-500 hover:bg-red-50"
+                            >
+                                <Trash2 size={14} /> Remove
+                            </button>
+                        )}
+                    </div>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        className="hidden"
+                        onChange={handleLogoSelect}
+                    />
+                </div>
+            </div>
+
+            {/* Business Profile */}
             <div className="card p-6">
                 <h2 className="font-semibold text-gray-900 mb-4">Business Profile</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">

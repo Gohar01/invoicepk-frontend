@@ -6,8 +6,6 @@ import { Client } from '../types';
 
 interface LineItem { description: string; quantity: number; unitPrice: number; }
 
-// Pakistan tax rates — federal GST + provincial services sales tax.
-// Rates change periodically, so "Custom" is always available as a fallback.
 const TAX_RATE_OPTIONS = [
     { label: 'No Tax (0%)', value: 0 },
     { label: 'Federal GST — Standard (18%)', value: 18 },
@@ -24,7 +22,8 @@ export default function CreateInvoicePage() {
     const [clients, setClients] = useState<Client[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [taxSelection, setTaxSelection] = useState<string>('18'); // default to standard GST
+    const [itemErrors, setItemErrors] = useState<Record<number, string>>({});
+    const [taxSelection, setTaxSelection] = useState<string>('18');
     const [customRate, setCustomRate] = useState<number>(0);
     const [form, setForm] = useState({
         clientId: '',
@@ -46,25 +45,64 @@ export default function CreateInvoicePage() {
     const addItem = () =>
         setItems(i => [...i, { description: '', quantity: 1, unitPrice: 0 }]);
 
-    const removeItem = (idx: number) =>
+    const removeItem = (idx: number) => {
         setItems(i => i.filter((_, j) => j !== idx));
+        setItemErrors(errs => {
+            const copy = { ...errs };
+            delete copy[idx];
+            return copy;
+        });
+    };
 
-    const updateItem = (idx: number, field: keyof LineItem, value: string | number) =>
-        setItems(i => i.map((item, j) => j === idx ? { ...item, [field]: value } : item));
+    // Validate a single field as the user types and store a friendly message
+    const validateItem = (item: LineItem): string | null => {
+        if (item.quantity <= 0) return 'Quantity must be greater than 0';
+        if (item.unitPrice <= 0) return 'Unit price must be greater than 0';
+        return null;
+    };
 
-    // Resolve actual GST % being used
+    const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
+        setItems(i => {
+            const updated = i.map((item, j) => j === idx ? { ...item, [field]: value } : item);
+            const err = validateItem(updated[idx]);
+            setItemErrors(errs => ({ ...errs, [idx]: err ?? '' }));
+            return updated;
+        });
+    };
+
     const gstPercent = taxSelection === 'custom' ? customRate : parseFloat(taxSelection);
 
-    // Totals
-    const subTotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
+    const subTotal = items.reduce((s, i) => s + Math.max(i.quantity, 0) * Math.max(i.unitPrice, 0), 0);
     const gstAmount = Math.round(subTotal * (gstPercent / 100) * 100) / 100;
     const total = subTotal + gstAmount;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.clientId) { setError('Please select a client.'); return; }
-        if (items.some(i => !i.description)) { setError('All items need a description.'); return; }
         setError('');
+
+        if (!form.clientId) { setError('Please select a client.'); return; }
+        if (items.some(i => !i.description.trim())) {
+            setError('All items need a description.');
+            return;
+        }
+
+        // Block submit if any item has invalid quantity/price
+        const errors: Record<number, string> = {};
+        items.forEach((item, idx) => {
+            const err = validateItem(item);
+            if (err) errors[idx] = err;
+        });
+        setItemErrors(errors);
+        if (Object.keys(errors).length > 0) {
+            setError('Please fix the highlighted line items — quantity and unit price must be greater than 0.');
+            return;
+        }
+
+        if (taxSelection === 'custom' && (customRate < 0 || customRate > 100)) {
+            setError('Custom tax rate must be between 0 and 100.');
+            return;
+        }
+
         setSaving(true);
         try {
             const { data } = await api.post('/invoices', {
@@ -121,11 +159,7 @@ export default function CreateInvoicePage() {
                         {!clients.length && (
                             <p className="text-xs text-amber-600 mt-1">
                                 No clients yet.{' '}
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/clients')}
-                                    className="underline"
-                                >
+                                <button type="button" onClick={() => navigate('/clients')} className="underline">
                                     Add a client first
                                 </button>
                             </p>
@@ -147,6 +181,7 @@ export default function CreateInvoicePage() {
                             <input
                                 type="date" className="input"
                                 value={form.dueDate}
+                                min={form.issueDate}
                                 onChange={e => setForm(f => ({ ...f, dueDate: e.target.value }))}
                                 required
                             />
@@ -166,12 +201,11 @@ export default function CreateInvoicePage() {
                                 ))}
                             </select>
                             <p className="text-xs text-gray-400 mt-1">
-                                Rates shown are federal GST + common provincial services tax rates.
-                                Always confirm the exact rate for your service type on FBR / your
-                                provincial revenue authority's website, as rates change periodically.
+                                Confirm the exact rate for your service type on FBR / your provincial
+                                revenue authority's website, as rates change periodically.
                             </p>
                         </div>
-                        {taxSelection === 'custom' ? (
+                        {taxSelection === 'custom' && (
                             <div>
                                 <label className="label">Custom Tax %</label>
                                 <input
@@ -181,28 +215,17 @@ export default function CreateInvoicePage() {
                                     onChange={e => setCustomRate(parseFloat(e.target.value) || 0)}
                                 />
                             </div>
-                        ) : (
-                            <div>
-                                <label className="label">Notes</label>
-                                <input
-                                    className="input" placeholder="Payment terms, bank details..."
-                                    value={form.notes}
-                                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                                />
-                            </div>
                         )}
                     </div>
 
-                    {taxSelection === 'custom' && (
-                        <div>
-                            <label className="label">Notes</label>
-                            <input
-                                className="input" placeholder="Payment terms, bank details..."
-                                value={form.notes}
-                                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                            />
-                        </div>
-                    )}
+                    <div>
+                        <label className="label">Notes</label>
+                        <input
+                            className="input" placeholder="Payment terms, bank details..."
+                            value={form.notes}
+                            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                        />
+                    </div>
                 </div>
 
                 {/* Line Items */}
@@ -224,45 +247,52 @@ export default function CreateInvoicePage() {
                         <div className="col-span-2 text-right">Total</div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                         {items.map((item, idx) => (
-                            <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                                <div className="col-span-6">
-                                    <input
-                                        className="input" placeholder="Service or product description"
-                                        value={item.description}
-                                        onChange={e => updateItem(idx, 'description', e.target.value)}
-                                        required
-                                    />
+                            <div key={idx}>
+                                <div className="grid grid-cols-12 gap-2 items-center">
+                                    <div className="col-span-6">
+                                        <input
+                                            className="input" placeholder="Service or product description"
+                                            value={item.description}
+                                            onChange={e => updateItem(idx, 'description', e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <input
+                                            className={`input text-center ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                                            type="number" min="1" step="1"
+                                            value={item.quantity}
+                                            onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <input
+                                            className={`input text-right ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                                            type="number" min="1" step="1"
+                                            placeholder="0"
+                                            value={item.unitPrice || ''}
+                                            onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                        />
+                                    </div>
+                                    <div className="col-span-1 text-right text-sm font-medium text-gray-700">
+                                        {(Math.max(item.quantity, 0) * Math.max(item.unitPrice, 0)).toLocaleString()}
+                                    </div>
+                                    <div className="col-span-1 flex justify-end">
+                                        {items.length > 1 && (
+                                            <button
+                                                type="button" onClick={() => removeItem(idx)}
+                                                className="text-gray-300 hover:text-red-400 transition-colors"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="col-span-2">
-                                    <input
-                                        className="input text-center" type="number" min="0.01" step="0.01"
-                                        value={item.quantity}
-                                        onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                                    />
-                                </div>
-                                <div className="col-span-2">
-                                    <input
-                                        className="input text-right" type="number" min="0" step="1"
-                                        placeholder="0"
-                                        value={item.unitPrice || ''}
-                                        onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                    />
-                                </div>
-                                <div className="col-span-1 text-right text-sm font-medium text-gray-700">
-                                    {(item.quantity * item.unitPrice).toLocaleString()}
-                                </div>
-                                <div className="col-span-1 flex justify-end">
-                                    {items.length > 1 && (
-                                        <button
-                                            type="button" onClick={() => removeItem(idx)}
-                                            className="text-gray-300 hover:text-red-400 transition-colors"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )}
-                                </div>
+                                {itemErrors[idx] && (
+                                    <p className="text-xs text-red-500 mt-0.5 ml-1">{itemErrors[idx]}</p>
+                                )}
                             </div>
                         ))}
                     </div>
