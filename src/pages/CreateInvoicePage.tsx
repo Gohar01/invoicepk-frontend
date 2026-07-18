@@ -6,16 +6,30 @@ import { Client } from '../types';
 
 interface LineItem { description: string; quantity: number; unitPrice: number; }
 
+// Pakistan tax rates — federal GST + provincial services sales tax.
+// Rates change periodically, so "Custom" is always available as a fallback.
+const TAX_RATE_OPTIONS = [
+    { label: 'No Tax (0%)', value: 0 },
+    { label: 'Federal GST — Standard (18%)', value: 18 },
+    { label: 'Federal GST — Reduced (5%)', value: 5 },
+    { label: 'Sindh SRB — Services (13%)', value: 13 },
+    { label: 'Punjab PRA — Services (16%)', value: 16 },
+    { label: 'KPK KPRA — Services (15%)', value: 15 },
+    { label: 'Balochistan BRA — Services (15%)', value: 15 },
+    { label: 'Custom rate', value: 'custom' },
+];
+
 export default function CreateInvoicePage() {
     const navigate = useNavigate();
     const [clients, setClients] = useState<Client[]>([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [taxSelection, setTaxSelection] = useState<string>('18'); // default to standard GST
+    const [customRate, setCustomRate] = useState<number>(0);
     const [form, setForm] = useState({
         clientId: '',
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: '',
-        gstPercent: 0,
         notes: '',
     });
     const [items, setItems] = useState<LineItem[]>([
@@ -24,7 +38,6 @@ export default function CreateInvoicePage() {
 
     useEffect(() => {
         api.get('/clients').then(r => setClients(r.data));
-        // Default due date = 30 days from today
         const due = new Date();
         due.setDate(due.getDate() + 30);
         setForm(f => ({ ...f, dueDate: due.toISOString().split('T')[0] }));
@@ -39,9 +52,12 @@ export default function CreateInvoicePage() {
     const updateItem = (idx: number, field: keyof LineItem, value: string | number) =>
         setItems(i => i.map((item, j) => j === idx ? { ...item, [field]: value } : item));
 
+    // Resolve actual GST % being used
+    const gstPercent = taxSelection === 'custom' ? customRate : parseFloat(taxSelection);
+
     // Totals
     const subTotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-    const gstAmount = Math.round(subTotal * (form.gstPercent / 100) * 100) / 100;
+    const gstAmount = Math.round(subTotal * (gstPercent / 100) * 100) / 100;
     const total = subTotal + gstAmount;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -55,7 +71,7 @@ export default function CreateInvoicePage() {
                 clientId: parseInt(form.clientId),
                 issueDate: form.issueDate,
                 dueDate: form.dueDate,
-                gstPercent: form.gstPercent,
+                gstPercent: gstPercent,
                 notes: form.notes,
                 items: items.map(i => ({
                     description: i.description,
@@ -139,19 +155,45 @@ export default function CreateInvoicePage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="label">GST %</label>
+                            <label className="label">Tax Rate</label>
                             <select
                                 className="input"
-                                value={form.gstPercent}
-                                onChange={e => setForm(f => ({ ...f, gstPercent: parseFloat(e.target.value) }))}
+                                value={taxSelection}
+                                onChange={e => setTaxSelection(e.target.value)}
                             >
-                                <option value={0}>No GST (0%)</option>
-                                <option value={5}>5%</option>
-                                <option value={13}>13%</option>
-                                <option value={17}>17% (Standard)</option>
-                                <option value={18}>18%</option>
+                                {TAX_RATE_OPTIONS.map(opt => (
+                                    <option key={opt.label} value={opt.value}>{opt.label}</option>
+                                ))}
                             </select>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Rates shown are federal GST + common provincial services tax rates.
+                                Always confirm the exact rate for your service type on FBR / your
+                                provincial revenue authority's website, as rates change periodically.
+                            </p>
                         </div>
+                        {taxSelection === 'custom' ? (
+                            <div>
+                                <label className="label">Custom Tax %</label>
+                                <input
+                                    className="input" type="number" min="0" max="100" step="0.5"
+                                    placeholder="e.g. 15"
+                                    value={customRate || ''}
+                                    onChange={e => setCustomRate(parseFloat(e.target.value) || 0)}
+                                />
+                            </div>
+                        ) : (
+                            <div>
+                                <label className="label">Notes</label>
+                                <input
+                                    className="input" placeholder="Payment terms, bank details..."
+                                    value={form.notes}
+                                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {taxSelection === 'custom' && (
                         <div>
                             <label className="label">Notes</label>
                             <input
@@ -160,7 +202,7 @@ export default function CreateInvoicePage() {
                                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                             />
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Line Items */}
@@ -175,7 +217,6 @@ export default function CreateInvoicePage() {
                         </button>
                     </div>
 
-                    {/* Header */}
                     <div className="grid grid-cols-12 gap-2 mb-2 text-xs text-gray-400 uppercase px-1">
                         <div className="col-span-6">Description</div>
                         <div className="col-span-2 text-center">Qty</div>
@@ -232,9 +273,9 @@ export default function CreateInvoicePage() {
                             <span>Subtotal</span>
                             <span>PKR {subTotal.toLocaleString()}</span>
                         </div>
-                        {form.gstPercent > 0 && (
+                        {gstPercent > 0 && (
                             <div className="flex justify-between text-sm text-gray-600">
-                                <span>GST ({form.gstPercent}%)</span>
+                                <span>Tax ({gstPercent}%)</span>
                                 <span>PKR {gstAmount.toLocaleString()}</span>
                             </div>
                         )}
