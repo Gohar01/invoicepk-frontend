@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users, Mail, Phone } from 'lucide-react';
+import { Plus, Trash2, Pencil, Users, Mail, Phone } from 'lucide-react';
 import api from '../services/api';
 import { Client } from '../types';
+
+const emptyForm = { name: '', email: '', phone: '', address: '' };
 
 export default function ClientsPage() {
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
     const [saving, setSaving] = useState(false);
-    const [form, setForm] = useState({
-        name: '', email: '', phone: '', address: ''
-    });
+    const [form, setForm] = useState(emptyForm);
 
     const load = () => {
         api.get('/clients').then(r => setClients(r.data)).finally(() => setLoading(false));
@@ -18,13 +19,39 @@ export default function ClientsPage() {
 
     useEffect(() => { load(); }, []);
 
+    const openAddForm = () => {
+        setEditingId(null);
+        setForm(emptyForm);
+        setShowForm(true);
+    };
+
+    const openEditForm = (client: Client) => {
+        setEditingId(client.id);
+        setForm({
+            name: client.name,
+            email: client.email ?? '',
+            phone: client.phone ?? '',
+            address: client.address ?? '',
+        });
+        setShowForm(true);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditingId(null);
+        setForm(emptyForm);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
         try {
-            await api.post('/clients', form);
-            setForm({ name: '', email: '', phone: '', address: '' });
-            setShowForm(false);
+            if (editingId) {
+                await api.put(`/clients/${editingId}`, form);
+            } else {
+                await api.post('/clients', form);
+            }
+            closeForm();
             load();
         } finally {
             setSaving(false);
@@ -55,19 +82,21 @@ export default function ClientsPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
                     <p className="text-gray-500 text-sm mt-1">{clients.length} total clients</p>
                 </div>
-                <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
+                <button onClick={openAddForm} className="btn-primary flex items-center gap-2">
                     <Plus size={16} /> Add Client
                 </button>
             </div>
 
-            {/* Add Client Form */}
+            {/* Add / Edit Client Form */}
             {showForm && (
                 <div className="card p-6 mb-6">
-                    <h2 className="font-semibold text-gray-900 mb-4">New Client</h2>
+                    <h2 className="font-semibold text-gray-900 mb-4">
+                        {editingId ? 'Edit Client' : 'New Client'}
+                    </h2>
                     <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="label">Name *</label>
-                            <input className="input" placeholder="ABC Traders"
+                            <input className="input" placeholder="e.g. ABC Traders"
                                 value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
                         </div>
                         <div>
@@ -86,11 +115,11 @@ export default function ClientsPage() {
                                 value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
                         <div className="col-span-2 flex gap-3 justify-end">
-                            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
+                            <button type="button" onClick={closeForm} className="btn-secondary">
                                 Cancel
                             </button>
                             <button type="submit" className="btn-primary" disabled={saving}>
-                                {saving ? 'Saving...' : 'Save Client'}
+                                {saving ? 'Saving...' : editingId ? 'Update Client' : 'Save Client'}
                             </button>
                         </div>
                     </form>
@@ -133,8 +162,16 @@ export default function ClientsPage() {
                                     {client.totalInvoices} invoice{client.totalInvoices !== 1 ? 's' : ''}
                                 </span>
                                 <button
+                                    onClick={() => openEditForm(client)}
+                                    className="text-gray-400 hover:text-primary transition-colors"
+                                    title="Edit client"
+                                >
+                                    <Pencil size={16} />
+                                </button>
+                                <button
                                     onClick={() => handleDelete(client.id)}
                                     className="text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Delete client"
                                 >
                                     <Trash2 size={16} />
                                 </button>

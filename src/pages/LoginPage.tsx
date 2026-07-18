@@ -93,7 +93,14 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <label className="label">Password</label>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="label mb-0">Password</label>
+                                {isLogin && (
+                                    <a href="/forgot-password" className="text-xs text-primary hover:underline">
+                                        Forgot password?
+                                    </a>
+                                )}
+                            </div>
                             <input className="input" name="password" type="password" placeholder="At least 6 characters"
                                 value={form.password} onChange={handleChange} required />
                         </div>
