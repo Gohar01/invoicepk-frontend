@@ -29,7 +29,8 @@ export default function LoginPage() {
 
             const { data } = await api.post(endpoint, payload);
 
-            const profileRes = await api.get('/auth/profile', {
+            // Fetch profile to get full user object — now under /profile, not /auth/profile
+            const profileRes = await api.get('/profile', {
                 headers: { Authorization: `Bearer ${data.token}` }
             });
 

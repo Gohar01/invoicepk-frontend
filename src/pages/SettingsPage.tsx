@@ -26,7 +26,7 @@ export default function SettingsPage() {
     }, [user]);
 
     const refreshUser = async () => {
-        const { data } = await api.get('/auth/profile');
+        const { data } = await api.get('/profile');       // ← was /auth/profile
         const token = localStorage.getItem('token')!;
         login(token, data);
     };
@@ -36,7 +36,7 @@ export default function SettingsPage() {
         setSaving(true);
         setSuccess(false);
         try {
-            await api.put('/auth/profile', form);
+            await api.put('/profile', form);                 // ← was /auth/profile
             await refreshUser();
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
@@ -51,7 +51,6 @@ export default function SettingsPage() {
 
         setLogoError('');
 
-        // Basic client-side checks (backend re-validates too)
         const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
             setLogoError('Please upload a PNG, JPG, or WEBP image.');
@@ -66,7 +65,7 @@ export default function SettingsPage() {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            await api.post('/auth/logo', formData, {
+            await api.post('/profile/logo', formData, {       // ← was /auth/logo
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
             await refreshUser();
@@ -82,7 +81,7 @@ export default function SettingsPage() {
         if (!confirm('Remove your business logo?')) return;
         setUploadingLogo(true);
         try {
-            await api.delete('/auth/logo');
+            await api.delete('/profile/logo');                 // ← was /auth/logo
             await refreshUser();
         } finally {
             setUploadingLogo(false);
@@ -118,7 +117,6 @@ export default function SettingsPage() {
                 )}
 
                 <div className="flex items-center gap-5">
-                    {/* Preview */}
                     <div className="w-20 h-20 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
                         {user?.logoUrl ? (
                             <img src={user.logoUrl} alt="Business logo" className="w-full h-full object-contain" />
