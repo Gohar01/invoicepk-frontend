@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Download, Send, Bell, ArrowLeft, CheckCircle } from 'lucide-react';
 import api from '../services/api';
-import { InvoiceDetail } from '../types';
+import { InvoiceDetail, CURRENCY_SYMBOLS } from '../types';
 
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -80,6 +80,8 @@ export default function InvoiceDetailPage() {
     );
     if (!invoice) return <div className="p-6 text-gray-500">Invoice not found.</div>;
 
+    const currencySymbol = CURRENCY_SYMBOLS[invoice.currency] ?? invoice.currency;
+
     return (
         <div className="p-6 max-w-3xl mx-auto">
             {/* Back + Actions */}
@@ -119,6 +121,7 @@ export default function InvoiceDetailPage() {
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">INVOICE</h1>
                         <p className="text-primary font-semibold text-lg mt-1">#{invoice.invoiceNumber}</p>
+                        <p className="text-xs text-gray-400 mt-1">Currency: {invoice.currency}</p>
                     </div>
                     <span className={`${statusBadge(invoice.status)} text-sm px-3 py-1`}>
                         {invoice.status}
@@ -163,8 +166,8 @@ export default function InvoiceDetailPage() {
                             <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                 <td className="px-4 py-3 text-sm">{item.description}</td>
                                 <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-sm text-right">PKR {item.unitPrice.toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-right font-medium">PKR {item.subTotal.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-right">{currencySymbol} {item.unitPrice.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm text-right font-medium">{currencySymbol} {item.subTotal.toLocaleString()}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -175,17 +178,17 @@ export default function InvoiceDetailPage() {
                     <div className="w-64 space-y-2">
                         <div className="flex justify-between text-sm text-gray-600">
                             <span>Subtotal</span>
-                            <span>PKR {invoice.subTotal.toLocaleString()}</span>
+                            <span>{currencySymbol} {invoice.subTotal.toLocaleString()}</span>
                         </div>
                         {invoice.gstPercent > 0 && (
                             <div className="flex justify-between text-sm text-gray-600">
                                 <span>GST ({invoice.gstPercent}%)</span>
-                                <span>PKR {invoice.gstAmount.toLocaleString()}</span>
+                                <span>{currencySymbol} {invoice.gstAmount.toLocaleString()}</span>
                             </div>
                         )}
                         <div className="flex justify-between font-bold text-white bg-primary px-4 py-3 rounded-lg">
                             <span>TOTAL</span>
-                            <span>PKR {invoice.totalAmount.toLocaleString()}</span>
+                            <span>{currencySymbol} {invoice.totalAmount.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>

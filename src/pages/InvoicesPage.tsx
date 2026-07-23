@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, FileText, Download, Send, Bell } from 'lucide-react';
 import api from '../services/api';
-import { Invoice } from '../types';
+import { Invoice, CURRENCY_SYMBOLS } from '../types';
 
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -145,7 +145,7 @@ export default function InvoicesPage() {
                                     <td className="px-6 py-4 text-sm text-gray-500">{inv.issueDate}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500">{inv.dueDate}</td>
                                     <td className="px-6 py-4 text-sm text-right font-semibold">
-                                        PKR {inv.totalAmount.toLocaleString()}
+                                        {CURRENCY_SYMBOLS[inv.currency] ?? inv.currency} {inv.totalAmount.toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className={statusBadge(inv.status)}>{inv.status}</span>

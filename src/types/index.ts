@@ -33,6 +33,7 @@ export interface Invoice {
     id: number;
     invoiceNumber: string;
     clientName: string;
+    currency: string;
     issueDate: string;
     dueDate: string;
     totalAmount: number;
@@ -44,6 +45,7 @@ export interface InvoiceDetail {
     id: number;
     invoiceNumber: string;
     client: Client;
+    currency: string;
     issueDate: string;
     dueDate: string;
     gstPercent: number;
@@ -56,15 +58,39 @@ export interface InvoiceDetail {
     createdAt: string;
 }
 
+export interface CurrencyBreakdown {
+    currency: string;
+    totalRevenue: number;
+    pendingAmount: number;
+    invoiceCount: number;
+}
+
 export interface DashboardSummary {
     totalInvoices: number;
     paidInvoices: number;
     unpaidInvoices: number;
     overdueInvoices: number;
-    totalRevenue: number;
-    pendingAmount: number;
+    breakdown: CurrencyBreakdown[];
     recentInvoices: Invoice[];
 }
+
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+    PKR: 'Rs.',
+    USD: '$',
+    SAR: 'SR',
+    AED: 'AED',
+    GBP: '£',
+    EUR: '€',
+};
+
+export const CURRENCY_OPTIONS = [
+    { code: 'PKR', label: 'PKR — Pakistani Rupee' },
+    { code: 'USD', label: 'USD — US Dollar' },
+    { code: 'SAR', label: 'SAR — Saudi Riyal' },
+    { code: 'AED', label: 'AED — UAE Dirham' },
+    { code: 'GBP', label: 'GBP — British Pound' },
+    { code: 'EUR', label: 'EUR — Euro' },
+];
 
 export interface AuthResponse {
     token: string;
