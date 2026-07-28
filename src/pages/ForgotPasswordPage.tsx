@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
-const SUPPORT_EMAIL = 'gohar7260@gmail.com'; // change to your support email later
+const SUPPORT_EMAIL = 'support@invoicepk.online'; // change to your support email later
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
