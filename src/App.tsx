@@ -28,6 +28,7 @@ function AppRoutes() {
       />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login?signup=true" replace />} />
 
       <Route path="/" element={<LandingPage />} />
 
