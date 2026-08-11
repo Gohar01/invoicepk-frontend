@@ -4,7 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function LoginPage() {
-    const [isLogin, setIsLogin] = useState(true);
+    const [isLogin, setIsLogin] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('signup') !== 'true';
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { login } = useAuth();
@@ -35,7 +38,7 @@ export default function LoginPage() {
             });
 
             login(data.token, profileRes.data);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err: any) {
             setError(err.response?.data?.message ?? 'Something went wrong.');
         } finally {

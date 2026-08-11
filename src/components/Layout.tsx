@@ -3,7 +3,7 @@ import { LayoutDashboard, Users, FileText, Settings, LogOut } from 'lucide-react
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/clients', icon: Users, label: 'Clients' },
     { to: '/invoices', icon: FileText, label: 'Invoices' },
     { to: '/settings', icon: Settings, label: 'Settings' },
@@ -35,7 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <NavLink
                             key={to}
                             to={to}
-                            end={to === '/'}
+                            end={to === '/dashboard'}
                             className={({ isActive }) =>
                                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
                                     ? 'bg-primary-light text-primary-dark'

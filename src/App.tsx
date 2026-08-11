@@ -10,6 +10,7 @@ import InvoicesPage from './pages/InvoicesPage';
 import CreateInvoicePage from './pages/CreateInvoicePage';
 import InvoiceDetailPage from './pages/InvoiceDetailPage';
 import SettingsPage from './pages/SettingsPage';
+import LandingPage from './pages/LandingPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -23,12 +24,14 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      <Route path="/" element={
+      <Route path="/" element={<LandingPage />} />
+
+      <Route path="/dashboard" element={
         <ProtectedRoute>
           <Layout>
             <DashboardPage />
@@ -70,7 +73,7 @@ function AppRoutes() {
           </Layout>
         </ProtectedRoute>
       } />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />} />
     </Routes>
   );
 }
