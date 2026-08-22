@@ -8,7 +8,8 @@ import {
   Globe, 
   FileText,
   Users,
-  Settings
+  Settings,
+  Mail
 } from 'lucide-react';
 import dashboardMockup from '../assets/dashboard_mockup.png';
 
@@ -310,51 +311,93 @@ export default function LandingPage() {
         </button>
       </section>
 
-      {/* Footer */}
-      <footer id="contact" className="relative border-t border-white/5 bg-slate-950 py-12 text-slate-400">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-          <div>
-            <span className="text-xl font-bold text-white">
-              Invoice<span className="text-primary">PK</span>
-            </span>
-            <p className="text-xs text-slate-500 mt-1">Built for Pakistan's Digital &amp; Freelance Future.</p>
+      {/* Dedicated Contact Us Section */}
+      <section id="contact" className="relative max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-slate-950">
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-full px-3.5 py-1 text-xs font-semibold mb-4">
+            <Mail size={14} /> Direct Support &amp; Community
+          </div>
+          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white mb-3">
+            Have Questions or Need Help?
+          </h2>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed">
+            Our support team is dedicated to supporting Pakistani freelancers, software houses, agencies, and small businesses.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* Direct Email Support Card */}
+          <div className="bg-slate-900/80 border border-white/10 rounded-3xl p-8 backdrop-blur-xl hover:border-primary/50 transition-all flex flex-col justify-between group shadow-xl">
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Mail size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Email Support</h3>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                Have inquiries, technical feedback, or feature requests? Drop us an email anytime and we'll reply promptly.
+              </p>
+            </div>
+            <a 
+              href="mailto:support@invoicepk.online"
+              className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-slate-950 border border-primary/30 font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              support@invoicepk.online <ArrowRight size={16} />
+            </a>
           </div>
 
-          <div className="flex flex-col items-center md:items-start text-xs gap-1">
-            <span className="text-slate-400 font-semibold">Support &amp; Contact:</span>
-            <a href="mailto:support@invoicepk.online" className="text-primary font-bold hover:underline">
-              support@invoicepk.online
-            </a>
-          </div>
-
-          {/* Icon-Only Social Buttons */}
-          <div className="flex items-center gap-3">
-            <a 
-              href="https://www.linkedin.com/company/invoicepk" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              title="LinkedIn Page"
-              className="w-10 h-10 bg-white/5 hover:bg-[#0077B5] border border-white/10 hover:border-[#0077B5] text-slate-300 hover:text-white rounded-xl transition-all flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm"
-            >
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.78a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z" />
-              </svg>
-            </a>
-            <a 
-              href="https://www.facebook.com/invoicepk.online" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              title="Facebook Page"
-              className="w-10 h-10 bg-white/5 hover:bg-[#1877F2] border border-white/10 hover:border-[#1877F2] text-slate-300 hover:text-white rounded-xl transition-all flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm"
-            >
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" />
-              </svg>
-            </a>
+          {/* Social Communities Card */}
+          <div className="bg-slate-900/80 border border-white/10 rounded-3xl p-8 backdrop-blur-xl hover:border-blue-500/50 transition-all flex flex-col justify-between group shadow-xl">
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Globe size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Follow Our Channels</h3>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                Stay updated with platform features, invoicing guides, compliance tips for IT exporters, and Pakistani fintech news.
+              </p>
+            </div>
+            {/* Icon-Only Social Buttons */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://www.linkedin.com/company/invoicepk" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                title="LinkedIn Page"
+                className="flex-1 bg-white/5 hover:bg-[#0077B5] border border-white/10 hover:border-[#0077B5] text-slate-300 hover:text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center hover:shadow-[0_0_25px_rgba(0,119,181,0.5)] hover:scale-[1.02] active:scale-95"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.78a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z" />
+                </svg>
+              </a>
+              <a 
+                href="https://www.facebook.com/invoicepk.online" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                title="Facebook Page"
+                className="flex-1 bg-white/5 hover:bg-[#1877F2] border border-white/10 hover:border-[#1877F2] text-slate-300 hover:text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center hover:shadow-[0_0_25px_rgba(24,119,242,0.5)] hover:scale-[1.02] active:scale-95"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-8 pt-6 border-t border-white/5 text-center text-xs text-slate-600">
-          &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved.
+      </section>
+
+      {/* Footer */}
+      <footer className="relative border-t border-white/5 bg-slate-950 py-10 text-slate-500 text-xs">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-white tracking-tight">
+              Invoice<span className="text-primary">PK</span>
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="text-slate-400">Pakistan's Digital Billing Engine</span>
+          </div>
+          <div>
+            &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved. • Designed &amp; Developed in Pakistan 🇵🇰
+          </div>
         </div>
       </footer>
 
