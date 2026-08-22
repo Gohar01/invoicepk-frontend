@@ -18,7 +18,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans overflow-x-hidden selection:bg-primary selection:text-black">
+    <div className="min-h-screen bg-slate-950 text-white font-sans overflow-x-hidden selection:bg-primary selection:text-black scroll-smooth">
       
       {/* Background Gradients */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none overflow-hidden opacity-30">
@@ -83,7 +83,7 @@ export default function LandingPage() {
         </div>
 
         {/* Dashboard Mockup */}
-        <div id="dashboard-preview" className="relative max-w-5xl mx-auto rounded-2xl border border-white/10 bg-slate-900/50 p-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
+        <div id="dashboard-preview" className="scroll-mt-28 relative max-w-5xl mx-auto rounded-2xl border border-white/10 bg-slate-900/50 p-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none" />
           <img 
             src={dashboardMockup} 
@@ -94,7 +94,7 @@ export default function LandingPage() {
       </section>
 
       {/* Target Audience Solutions Section */}
-      <section id="solutions" className="relative max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
+      <section id="solutions" className="scroll-mt-24 relative max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Tailored for Your Business Structure</h2>
           <p className="text-slate-400">Manage your transactions seamlessly, whether you are billing local customers in PKR or global clients in foreign currencies.</p>
@@ -240,7 +240,7 @@ export default function LandingPage() {
       </section>
 
       {/* Core Platform Features Section */}
-      <section id="features" className="relative max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-slate-950">
+      <section id="features" className="scroll-mt-24 relative max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-slate-950">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl font-bold">Simplify Your Business Admin</h2>
           <p className="text-slate-400 text-sm mt-2">Everything you need to keep your billing neat and professional without complex software learning curves.</p>
@@ -312,7 +312,7 @@ export default function LandingPage() {
       </section>
 
       {/* Dedicated Contact Us Section */}
-      <section id="contact" className="relative max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-slate-950">
+      <section id="contact" className="scroll-mt-24 relative max-w-7xl mx-auto px-6 py-20 border-t border-white/5 bg-slate-950">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-full px-3.5 py-1 text-xs font-semibold mb-4">
             <Mail size={14} /> Direct Support &amp; Community
