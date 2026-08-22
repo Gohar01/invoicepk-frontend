@@ -310,8 +310,44 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative border-t border-white/5 bg-slate-950 py-12 text-center text-sm text-slate-500">
-        <p>&copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved. Built for Pakistan's Digital Future.</p>
+      <footer className="relative border-t border-white/5 bg-slate-950 py-12 text-slate-400">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+          <div>
+            <span className="text-xl font-bold text-white">
+              Invoice<span className="text-primary">PK</span>
+            </span>
+            <p className="text-xs text-slate-500 mt-1">Built for Pakistan's Digital & Freelance Future.</p>
+          </div>
+
+          <div className="flex flex-col items-center md:items-start text-xs gap-1">
+            <span className="text-slate-400 font-semibold">Support & Contact:</span>
+            <a href="mailto:support@invoicepk.online" className="text-primary font-bold hover:underline">
+              support@invoicepk.online
+            </a>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-medium">
+            <a 
+              href="https://www.linkedin.com/company/invoicepk" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-colors"
+            >
+              LinkedIn Page
+            </a>
+            <a 
+              href="https://www.facebook.com/invoicepk" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="px-3.5 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-colors"
+            >
+              Facebook Page
+            </a>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-6 mt-8 pt-6 border-t border-white/5 text-center text-xs text-slate-600">
+          &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved.
+        </div>
       </footer>
 
     </div>

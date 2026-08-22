@@ -49,6 +49,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     ))}
                 </nav>
 
+                {/* Support & Social Links */}
+                <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                    <p className="text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Support & Contact</p>
+                    <a 
+                        href="mailto:support@invoicepk.online" 
+                        className="block text-xs font-semibold text-primary hover:underline truncate mb-2"
+                    >
+                        support@invoicepk.online
+                    </a>
+                    <div className="flex items-center gap-3 text-xs">
+                        <a 
+                            href="https://www.linkedin.com/company/invoicepk" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-gray-600 hover:text-primary font-medium transition-colors"
+                        >
+                            LinkedIn
+                        </a>
+                        <span className="text-gray-300">•</span>
+                        <a 
+                            href="https://www.facebook.com/invoicepk" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-gray-600 hover:text-primary font-medium transition-colors"
+                        >
+                            Facebook
+                        </a>
+                    </div>
+                </div>
+
                 {/* User + Logout */}
                 <div className="p-3 border-t border-gray-100">
                     <div className="px-3 py-2 mb-1">
