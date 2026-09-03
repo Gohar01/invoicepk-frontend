@@ -77,6 +77,28 @@ export default function CreateInvoicePage() {
     }));
   };
 
+  const moveColumnLeft = (idx: number) => {
+    if (idx <= 0) return;
+    setCustomColumns(cols => {
+      const arr = [...cols];
+      const temp = arr[idx - 1];
+      arr[idx - 1] = arr[idx];
+      arr[idx] = temp;
+      return arr;
+    });
+  };
+
+  const moveColumnRight = (idx: number) => {
+    setCustomColumns(cols => {
+      if (idx >= cols.length - 1) return cols;
+      const arr = [...cols];
+      const temp = arr[idx + 1];
+      arr[idx + 1] = arr[idx];
+      arr[idx] = temp;
+      return arr;
+    });
+  };
+
   const applyPresetColumns = (preset: 'transport' | 'retail' | 'contractor') => {
     if (preset === 'transport') {
       setCustomColumns(['Bilty No.', 'Vehicle No.', 'Station', 'Capacity']);
@@ -369,13 +391,33 @@ export default function CreateInvoicePage() {
             {/* Custom Column Badges & Add Button */}
             <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200">
               <span className="text-xs font-semibold text-slate-500 mr-1">Active Columns:</span>
-              {customColumns.map(col => (
-                <span key={col} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary-dark border border-primary/20 text-xs font-bold px-2.5 py-1 rounded-md">
-                  {col}
+              {customColumns.map((col, idx) => (
+                <span key={col} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary-dark border border-primary/20 text-xs font-bold px-2.5 py-1 rounded-md shadow-xs">
+                  {idx > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => moveColumnLeft(idx)}
+                      className="text-slate-400 hover:text-slate-900 font-extrabold text-xs transition-colors"
+                      title="Move Column Left"
+                    >
+                      ←
+                    </button>
+                  )}
+                  <span>{col}</span>
+                  {idx < customColumns.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => moveColumnRight(idx)}
+                      className="text-slate-400 hover:text-slate-900 font-extrabold text-xs transition-colors"
+                      title="Move Column Right"
+                    >
+                      →
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeCustomColumn(col)}
-                    className="hover:text-red-500 font-extrabold text-sm ml-0.5"
+                    className="hover:text-red-500 font-extrabold text-sm ml-0.5 text-slate-400 transition-colors"
                     title="Remove column"
                   >
                     ×
