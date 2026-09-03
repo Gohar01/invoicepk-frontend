@@ -27,6 +27,7 @@ export interface InvoiceItem {
     quantity: number;
     unitPrice: number;
     subTotal: number;
+    customFields?: Record<string, string>;
 }
 
 export interface Invoice {
@@ -55,6 +56,7 @@ export interface InvoiceDetail {
     status: string;
     notes?: string;
     items: InvoiceItem[];
+    customColumns?: string[];
     createdAt: string;
 }
 

@@ -4,7 +4,12 @@ import { Plus, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { Client, CURRENCY_OPTIONS, CURRENCY_SYMBOLS } from '../types';
 
-interface LineItem { description: string; quantity: number; unitPrice: number; }
+interface LineItem { 
+  description: string; 
+  quantity: number; 
+  unitPrice: number; 
+  customValues?: Record<string, string>;
+}
 
 const TAX_RATE_OPTIONS = [
   { label: 'No Tax (0%)',                          value: 0    },
@@ -26,6 +31,9 @@ export default function CreateInvoicePage() {
   const [currency, setCurrency]   = useState('PKR');
   const [taxSelection, setTaxSelection] = useState<string>('18');
   const [customRate, setCustomRate]     = useState<number>(0);
+  const [customColumns, setCustomColumns] = useState<string[]>([]);
+  const [newColName, setNewColName]       = useState('');
+  const [showColInput, setShowColInput]   = useState(false);
   const [form, setForm] = useState({
     clientId: '',
     issueDate: new Date().toISOString().split('T')[0],
@@ -33,7 +41,7 @@ export default function CreateInvoicePage() {
     notes: '',
   });
   const [items, setItems] = useState<LineItem[]>([
-    { description: '', quantity: 1, unitPrice: 0 }
+    { description: '', quantity: 1, unitPrice: 0, customValues: {} }
   ]);
 
   useEffect(() => {
@@ -43,10 +51,6 @@ export default function CreateInvoicePage() {
     setForm(f => ({ ...f, dueDate: due.toISOString().split('T')[0] }));
   }, []);
 
-  // When switching to a foreign currency, export invoices conventionally
-  // carry no domestic GST/sales tax — so we reset to 0% automatically.
-  // Switching back to PKR restores the standard default so the user doesn't
-  // have to remember to re-add it.
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
     if (newCurrency !== 'PKR') {
@@ -56,8 +60,35 @@ export default function CreateInvoicePage() {
     }
   };
 
+  const addCustomColumn = (colName: string) => {
+    const trimmed = colName.trim();
+    if (!trimmed || customColumns.includes(trimmed)) return;
+    setCustomColumns(cols => [...cols, trimmed]);
+    setNewColName('');
+    setShowColInput(false);
+  };
+
+  const removeCustomColumn = (colName: string) => {
+    setCustomColumns(cols => cols.filter(c => c !== colName));
+    setItems(itemsList => itemsList.map(item => {
+      const copy = { ...(item.customValues || {}) };
+      delete copy[colName];
+      return { ...item, customValues: copy };
+    }));
+  };
+
+  const applyPresetColumns = (preset: 'transport' | 'retail' | 'contractor') => {
+    if (preset === 'transport') {
+      setCustomColumns(['Bilty No.', 'Vehicle No.', 'Station', 'Capacity']);
+    } else if (preset === 'retail') {
+      setCustomColumns(['Batch No.', 'Expiry Date', 'SKU / Barcode']);
+    } else if (preset === 'contractor') {
+      setCustomColumns(['PO Number', 'Location', 'Unit / Rate']);
+    }
+  };
+
   const addItem = () =>
-    setItems(i => [...i, { description: '', quantity: 1, unitPrice: 0 }]);
+    setItems(i => [...i, { description: '', quantity: 1, unitPrice: 0, customValues: {} }]);
 
   const removeItem = (idx: number) => {
     setItems(i => i.filter((_, j) => j !== idx));
@@ -74,13 +105,26 @@ export default function CreateInvoicePage() {
     return null;
   };
 
-  const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
+  const updateItem = (idx: number, field: keyof LineItem, value: any) => {
     setItems(i => {
       const updated = i.map((item, j) => j === idx ? { ...item, [field]: value } : item);
       const err = validateItem(updated[idx]);
       setItemErrors(errs => ({ ...errs, [idx]: err ?? '' }));
       return updated;
     });
+  };
+
+  const updateCustomFieldValue = (itemIdx: number, colName: string, value: string) => {
+    setItems(i => i.map((item, j) => {
+      if (j !== itemIdx) return item;
+      return {
+        ...item,
+        customValues: {
+          ...(item.customValues || {}),
+          [colName]: value
+        }
+      };
+    }));
   };
 
   const gstPercent = taxSelection === 'custom' ? customRate : parseFloat(taxSelection);
@@ -125,11 +169,23 @@ export default function CreateInvoicePage() {
         currency:   currency,
         gstPercent: gstPercent,
         notes:      form.notes,
-        items:      items.map(i => ({
-          description: i.description,
-          quantity:    i.quantity,
-          unitPrice:   i.unitPrice,
-        })),
+        items:      items.map(i => {
+          let finalDesc = i.description;
+          if (customColumns.length > 0 && i.customValues) {
+            const details = customColumns
+              .map(col => i.customValues?.[col] ? `${col}: ${i.customValues[col]}` : '')
+              .filter(Boolean)
+              .join(' | ');
+            if (details) {
+              finalDesc = `${i.description}\n[${details}]`;
+            }
+          }
+          return {
+            description: finalDesc,
+            quantity:    i.quantity,
+            unitPrice:   i.unitPrice,
+          };
+        }),
       });
       navigate(`/invoices/${data.id}`);
     } catch (err: any) {
@@ -140,25 +196,31 @@ export default function CreateInvoicePage() {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">New Invoice</h1>
-        <p className="text-gray-500 text-sm mt-1">Fill in the details below</p>
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 mb-4">
-          {error}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+            {error}
+          </div>
+        )}
 
-        {/* Client + Dates */}
+        {/* Invoice Details */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Invoice Details</h2>
           <div>
-            <label className="label">Client *</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="label">Client *</label>
+              <button
+                type="button"
+                onClick={() => navigate('/clients')}
+                className="text-xs text-primary hover:underline font-medium"
+              >
+                + New Client
+              </button>
+            </div>
             <select
               className="input"
               value={form.clientId}
@@ -170,12 +232,9 @@ export default function CreateInvoicePage() {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            {!clients.length && (
-              <p className="text-xs text-amber-600 mt-1">
-                No clients yet.{' '}
-                <button type="button" onClick={() => navigate('/clients')} className="underline">
-                  Add a client first
-                </button>
+            {clients.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">
+                No clients yet. <button type="button" onClick={() => navigate('/clients')} className="text-primary hover:underline">Add one first</button>.
               </p>
             )}
           </div>
@@ -263,28 +322,122 @@ export default function CreateInvoicePage() {
 
         {/* Line Items */}
         <div className="card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-gray-900">Line Items</h2>
-            <button
-              type="button" onClick={addItem}
-              className="flex items-center gap-1 text-sm text-primary hover:underline font-medium"
-            >
-              <Plus size={14} /> Add Item
-            </button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="font-semibold text-gray-900">Line Items & Custom Columns</h2>
+              <p className="text-xs text-gray-400">Add custom fields like Bilty No., Vehicle No., Station, PO #, or Batch No.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button" onClick={addItem}
+                className="flex items-center gap-1 text-xs bg-primary/10 text-primary hover:bg-primary hover:text-slate-950 font-bold px-3 py-1.5 rounded-lg transition-all"
+              >
+                <Plus size={14} /> Add Item
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Presets & Custom Column Manager Bar */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 mb-5 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-semibold text-slate-700">Quick Column Presets:</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPresetColumns('transport')}
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:border-primary hover:text-primary transition-all shadow-sm"
+                >
+                  🚚 Goods Transport (Bilty, Vehicle #, Route, Capacity)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPresetColumns('retail')}
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:border-primary hover:text-primary transition-all shadow-sm"
+                >
+                  🏬 Retail / Wholesale (Batch #, Expiry, SKU)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPresetColumns('contractor')}
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:border-primary hover:text-primary transition-all shadow-sm"
+                >
+                  🏗️ Contractor / Services (PO #, Location, Unit)
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Column Badges & Add Button */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200">
+              <span className="text-xs font-semibold text-slate-500 mr-1">Active Columns:</span>
+              {customColumns.map(col => (
+                <span key={col} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary-dark border border-primary/20 text-xs font-bold px-2.5 py-1 rounded-md">
+                  {col}
+                  <button
+                    type="button"
+                    onClick={() => removeCustomColumn(col)}
+                    className="hover:text-red-500 font-extrabold text-sm ml-0.5"
+                    title="Remove column"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+
+              {!showColInput ? (
+                <button
+                  type="button"
+                  onClick={() => setShowColInput(true)}
+                  className="text-xs bg-white border border-dashed border-slate-300 text-slate-600 hover:text-primary hover:border-primary px-2.5 py-1 rounded-md font-medium transition-colors"
+                >
+                  + Add Custom Column
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="e.g. Bilty No."
+                    className="px-2 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:border-primary w-32"
+                    value={newColName}
+                    onChange={e => setNewColName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addCustomColumn(newColName);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => addCustomColumn(newColName)}
+                    className="bg-primary text-slate-950 px-2.5 py-1 rounded-md text-xs font-bold"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowColInput(false)}
+                    className="text-xs text-slate-400 hover:text-slate-600 px-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-12 gap-2 mb-2 text-xs text-gray-400 uppercase px-1">
-            <div className="col-span-6">Description</div>
+            <div className="col-span-5">Description</div>
             <div className="col-span-2 text-center">Qty</div>
             <div className="col-span-2 text-right">Unit Price</div>
-            <div className="col-span-2 text-right">Total</div>
+            <div className="col-span-3 text-right">Total</div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-4">
             {items.map((item, idx) => (
-              <div key={idx}>
+              <div key={idx} className="bg-gray-50/50 p-3 rounded-xl border border-gray-200/80 space-y-3">
                 <div className="grid grid-cols-12 gap-2 items-center">
-                  <div className="col-span-6">
+                  <div className="col-span-5">
                     <input
                       className="input" placeholder="Service or product description"
                       value={item.description}
@@ -309,7 +462,7 @@ export default function CreateInvoicePage() {
                       onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
                     />
                   </div>
-                  <div className="col-span-1 text-right text-sm font-medium text-gray-700">
+                  <div className="col-span-2 text-right text-sm font-bold text-gray-800">
                     {(Math.max(item.quantity, 0) * Math.max(item.unitPrice, 0)).toLocaleString()}
                   </div>
                   <div className="col-span-1 flex justify-end">
@@ -318,11 +471,30 @@ export default function CreateInvoicePage() {
                         type="button" onClick={() => removeItem(idx)}
                         className="text-gray-300 hover:text-red-400 transition-colors"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
                 </div>
+
+                {/* Render Dynamic Custom Column Input Fields for each row */}
+                {customColumns.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-200/60 bg-white/80 p-2.5 rounded-lg">
+                    {customColumns.map(col => (
+                      <div key={col}>
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">{col}</label>
+                        <input
+                          type="text"
+                          className="input py-1 text-xs"
+                          placeholder={`Enter ${col}`}
+                          value={item.customValues?.[col] || ''}
+                          onChange={e => updateCustomFieldValue(idx, col, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {itemErrors[idx] && (
                   <p className="text-xs text-red-500 mt-0.5 ml-1">{itemErrors[idx]}</p>
                 )}

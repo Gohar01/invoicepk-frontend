@@ -164,7 +164,26 @@ export default function InvoiceDetailPage() {
                     <tbody className="divide-y divide-gray-100">
                         {invoice.items.map((item, i) => (
                             <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-4 py-3 text-sm">{item.description}</td>
+                                <td className="px-4 py-3 text-sm">
+                                    {item.description.includes('\n[') ? (
+                                        <div>
+                                            <div className="font-semibold text-gray-900">{item.description.split('\n[')[0]}</div>
+                                            <div className="flex flex-wrap gap-1.5 mt-1">
+                                                {item.description
+                                                    .split('\n[')[1]
+                                                    .replace(']', '')
+                                                    .split(' | ')
+                                                    .map((detail, dIdx) => (
+                                                        <span key={dIdx} className="inline-block bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded font-mono border border-slate-200">
+                                                            {detail}
+                                                        </span>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        item.description
+                                    )}
+                                </td>
                                 <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
                                 <td className="px-4 py-3 text-sm text-right">{currencySymbol} {item.unitPrice.toLocaleString()}</td>
                                 <td className="px-4 py-3 text-sm text-right font-medium">{currencySymbol} {item.subTotal.toLocaleString()}</td>
