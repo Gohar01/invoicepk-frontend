@@ -215,46 +215,93 @@ export default function InvoiceDetailPage() {
                     </div>
                 </div>
 
-                {/* Line Items */}
-                <table className="w-full mb-6">
-                    <thead>
-                        <tr className="bg-gray-900 text-white text-sm">
-                            <th className="text-left px-4 py-3 rounded-tl-lg">Description</th>
-                            <th className="text-center px-4 py-3">Qty</th>
-                            <th className="text-right px-4 py-3">Unit Price</th>
-                            <th className="text-right px-4 py-3 rounded-tr-lg">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {invoice.items.map((item, i) => (
-                            <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-4 py-3 text-sm">
-                                    {item.description.includes('\n[') ? (
-                                        <div>
-                                            <div className="font-semibold text-gray-900">{item.description.split('\n[')[0]}</div>
-                                            <div className="flex flex-wrap gap-1.5 mt-1">
-                                                {item.description
-                                                    .split('\n[')[1]
-                                                    .replace(']', '')
-                                                    .split(' | ')
-                                                    .map((detail, dIdx) => (
-                                                        <span key={dIdx} className="inline-block bg-slate-100 text-slate-700 text-xs px-2 py-0.5 rounded font-mono border border-slate-200">
-                                                            {detail}
-                                                        </span>
-                                                    ))}
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        item.description
-                                    )}
-                                </td>
-                                <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-sm text-right">{currencySymbol} {item.unitPrice.toLocaleString()}</td>
-                                <td className="px-4 py-3 text-sm text-right font-medium">{currencySymbol} {item.subTotal.toLocaleString()}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                {/* Line Items: True Dynamic Grid Table */}
+                {(() => {
+                    let headers: string[] = ['Description'];
+                    const firstItem = invoice.items[0];
+
+                    if (firstItem && firstItem.description.includes('\n[COLS:')) {
+                        const parts = firstItem.description.split('\n[COLS:');
+                        const colsStr = parts[1].split(']\n[VALS:')[0];
+                        headers = colsStr.split('|');
+                    } else if (firstItem && firstItem.description.includes('\n[')) {
+                        const detailsStr = firstItem.description.split('\n[')[1].replace(']', '');
+                        const legacyCols = detailsStr.split(' | ').map(p => p.split(': ')[0]).filter(Boolean);
+                        headers = ['Description', ...legacyCols];
+                    }
+
+                    return (
+                        <div className="overflow-x-auto mb-6 rounded-lg border border-gray-200 shadow-2xs">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-900 text-white font-semibold">
+                                        <th className="py-3 px-4 text-center rounded-tl-lg w-12">Sr. #</th>
+                                        {headers.map(h => (
+                                            <th key={h} className="py-3 px-4 text-left">{h}</th>
+                                        ))}
+                                        {!headers.includes('Qty') && !headers.includes('Quantity') && (
+                                            <th className="py-3 px-4 text-center w-20">Qty</th>
+                                        )}
+                                        {!headers.includes('Unit Price') && !headers.includes('Price') && (
+                                            <th className="py-3 px-4 text-right w-28">Unit Price</th>
+                                        )}
+                                        <th className="py-3 px-4 text-right rounded-tr-lg w-32">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {invoice.items.map((item, i) => {
+                                        let rowVals: Record<string, string> = {};
+                                        let mainDesc = item.description;
+
+                                        if (item.description.includes('\n[COLS:')) {
+                                            const parts = item.description.split('\n[COLS:');
+                                            mainDesc = parts[0];
+                                            const colsStr = parts[1].split(']\n[VALS:')[0];
+                                            const valsStr = parts[1].split(']\n[VALS:')[1]?.replace(']', '') || '';
+                                            const cList = colsStr.split('|');
+                                            const vList = valsStr.split(' | ');
+
+                                            cList.forEach((col, cIdx) => {
+                                                const rawVal = vList[cIdx] || '';
+                                                const pairVal = rawVal.includes(': ') ? rawVal.split(': ')[1] : rawVal;
+                                                rowVals[col] = pairVal === '-' ? '' : pairVal;
+                                            });
+                                        } else if (item.description.includes('\n[')) {
+                                            const parts = item.description.split('\n[');
+                                            mainDesc = parts[0];
+                                            rowVals['Description'] = mainDesc;
+                                            const detailsStr = parts[1].replace(']', '');
+                                            detailsStr.split(' | ').forEach(pair => {
+                                                const [k, v] = pair.split(': ');
+                                                if (k && v && v !== '-') rowVals[k] = v;
+                                            });
+                                        } else {
+                                            rowVals['Description'] = item.description;
+                                        }
+
+                                        return (
+                                            <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
+                                                <td className="py-3 px-4 text-center font-bold text-gray-400">{i + 1}</td>
+                                                {headers.map(h => (
+                                                    <td key={h} className="py-3 px-4 font-medium text-gray-800">
+                                                        {h === 'Description' ? mainDesc : (rowVals[h] || '—')}
+                                                    </td>
+                                                ))}
+                                                {!headers.includes('Qty') && !headers.includes('Quantity') && (
+                                                    <td className="py-3 px-4 text-center text-gray-600">{item.quantity}</td>
+                                                )}
+                                                {!headers.includes('Unit Price') && !headers.includes('Price') && (
+                                                    <td className="py-3 px-4 text-right text-gray-600">{currencySymbol} {item.unitPrice.toLocaleString()}</td>
+                                                )}
+                                                <td className="py-3 px-4 text-right font-bold text-gray-900">{currencySymbol} {item.subTotal.toLocaleString()}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                })()}
 
                 {/* Totals */}
                 <div className="flex justify-end">

@@ -35,6 +35,7 @@ export default function EditInvoicePage() {
   const [taxSelection, setTaxSelection] = useState<string>('18');
   const [customRate, setCustomRate]     = useState<number>(0);
   const [customColumns, setCustomColumns] = useState<string[]>([]);
+  const [includeDescription, setIncludeDescription] = useState(true);
   const [newColName, setNewColName]       = useState('');
   const [showColInput, setShowColInput]   = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -126,11 +127,33 @@ export default function EditInvoicePage() {
 
       // Parse custom fields if stored in item description
       const parsedColumnsSet = new Set<string>();
+      let detectedHasDescription = true;
+
       const parsedItems: LineItem[] = inv.items.map(item => {
         let desc = item.description;
         const customVals: Record<string, string> = {};
 
-        if (desc.includes('\n[')) {
+        if (desc.includes('\n[COLS:')) {
+          const parts = desc.split('\n[COLS:');
+          desc = parts[0];
+          const colsStr = parts[1].split(']\n[VALS:')[0];
+          const valsStr = parts[1].split(']\n[VALS:')[1]?.replace(']', '') || '';
+          const cList = colsStr.split('|');
+          const vList = valsStr.split(' | ');
+
+          detectedHasDescription = cList.includes('Description');
+
+          cList.forEach((col, cIdx) => {
+            if (col !== 'Description') {
+              parsedColumnsSet.add(col);
+              const rawVal = vList[cIdx] || '';
+              const pairVal = rawVal.includes(': ') ? rawVal.split(': ')[1] : rawVal;
+              if (pairVal && pairVal !== '-') {
+                customVals[col] = pairVal;
+              }
+            }
+          });
+        } else if (desc.includes('\n[')) {
           const parts = desc.split('\n[');
           desc = parts[0];
           const detailsStr = parts[1].replace(']', '');
@@ -160,6 +183,7 @@ export default function EditInvoicePage() {
       const loadedCols = Array.from(parsedColumnsSet);
       const finalItems = parsedItems.length > 0 ? parsedItems : [{ description: '', quantity: 1, unitPrice: 0, customValues: {} }];
 
+      setIncludeDescription(detectedHasDescription);
       setCustomColumns(loadedCols);
       setItems(finalItems);
 
@@ -319,6 +343,11 @@ export default function EditInvoicePage() {
 
     setSaving(true);
     try {
+      const activeCols = [
+        ...(includeDescription ? ['Description'] : []),
+        ...customColumns
+      ];
+
       await api.put(`/invoices/${id}`, {
         clientId:   parseInt(form.clientId),
         issueDate:  form.issueDate,
@@ -327,20 +356,20 @@ export default function EditInvoicePage() {
         gstPercent: gstPercent,
         notes:      form.notes,
         items:      items.map(i => {
-          let finalDesc = i.description;
-          if (customColumns.length > 0) {
-            const details = customColumns
-              .map(col => {
-                const val = i.customValues?.[col]?.trim();
-                return `${col}: ${val && val.length > 0 ? val : '-'}`;
-              })
-              .join(' | ');
-            finalDesc = `${i.description}\n[${details}]`;
-          }
+          const mainDesc = includeDescription ? (i.description.trim() || 'Item') : (customColumns.length > 0 && i.customValues?.[customColumns[0]] ? i.customValues[customColumns[0]] : 'Item');
+
+          const colDetails = activeCols.map(col => {
+            if (col === 'Description') return `Description: ${i.description.trim() || '-'}`;
+            const val = i.customValues?.[col]?.trim();
+            return `${col}: ${val && val.length > 0 ? val : '-'}`;
+          }).join(' | ');
+
+          const finalDesc = `${mainDesc}\n[COLS:${activeCols.join('|')}]\n[VALS:${colDetails}]`;
+
           return {
             description: finalDesc,
-            quantity:    i.quantity,
-            unitPrice:   i.unitPrice,
+            quantity:    Math.max(i.quantity, 1),
+            unitPrice:   Math.max(i.unitPrice, 0),
           };
         }),
       });
@@ -532,9 +561,26 @@ export default function EditInvoicePage() {
               </div>
             </div>
 
-            {/* Active Columns Badges */}
+            {/* Custom Column Badges & Add Button */}
             <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200">
               <span className="text-xs font-semibold text-slate-500 mr-1">Active Columns:</span>
+              <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 text-xs font-bold px-2 py-1 rounded-md">
+                <span>Sr. #</span>
+                <span className="text-[10px] text-slate-500 font-normal">(Auto)</span>
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setIncludeDescription(!includeDescription)}
+                className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md border transition-all ${
+                  includeDescription ? 'bg-primary/10 text-primary-dark border-primary/30' : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+                }`}
+                title="Toggle Description column"
+              >
+                <span>Description</span>
+                <span className="text-[10px]">{includeDescription ? '✓ ON' : '+ OFF'}</span>
+              </button>
+
               {customColumns.map((col, idx) => (
                 <span key={col} className="inline-flex items-center gap-1.5 bg-primary/10 text-primary-dark border border-primary/20 text-xs font-bold px-2.5 py-1 rounded-md shadow-xs">
                   {idx > 0 && (
@@ -568,6 +614,11 @@ export default function EditInvoicePage() {
                   </button>
                 </span>
               ))}
+
+              <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 text-xs font-bold px-2 py-1 rounded-md">
+                <span>Amount</span>
+                <span className="text-[10px] text-slate-500 font-normal">(Auto)</span>
+              </span>
 
               {!showColInput ? (
                 <button
@@ -612,75 +663,92 @@ export default function EditInvoicePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-2 mb-2 text-xs text-gray-400 uppercase px-1">
-            <div className="col-span-5">Description</div>
-            <div className="col-span-2 text-center">Qty</div>
-            <div className="col-span-2 text-right">Unit Price</div>
-            <div className="col-span-3 text-right">Total</div>
-          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gray-900 text-white font-semibold">
+                  <th className="py-2.5 px-3 text-center rounded-tl-lg w-12">Sr. #</th>
+                  {includeDescription && (
+                    <th className="py-2.5 px-3 text-left">Description</th>
+                  )}
+                  {customColumns.map(col => (
+                    <th key={col} className="py-2.5 px-3 text-left">{col}</th>
+                  ))}
+                  <th className="py-2.5 px-3 text-right w-28">Qty</th>
+                  <th className="py-2.5 px-3 text-right w-32">Unit Price</th>
+                  <th className="py-2.5 px-3 text-right w-32">Amount</th>
+                  <th className="py-2.5 px-2 text-center rounded-tr-lg w-10"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {items.map((item, idx) => (
+                  <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
+                    <td className="py-2.5 px-3 text-center font-bold text-gray-500">
+                      {idx + 1}
+                    </td>
 
-          <div className="space-y-4">
-            {items.map((item, idx) => (
-              <div key={idx} className="bg-gray-50/50 p-3 rounded-xl border border-gray-200/80 space-y-3">
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <div className="col-span-5">
-                    <input
-                      className="input" placeholder="Service or product description"
-                      value={item.description}
-                      onChange={e => updateItem(idx, 'description', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <input
-                      className={`input text-center ${itemErrors[idx] ? 'border-red-400' : ''}`}
-                      type="number" min="1" step="1"
-                      value={item.quantity}
-                      onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <input
-                      className={`input text-right ${itemErrors[idx] ? 'border-red-400' : ''}`}
-                      type="number" min="1" step="1"
-                      placeholder="0"
-                      value={item.unitPrice || ''}
-                      onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                  <div className="col-span-2 text-right text-sm font-bold text-gray-800">
-                    {(Math.max(item.quantity, 0) * Math.max(item.unitPrice, 0)).toLocaleString()}
-                  </div>
-                  <div className="col-span-1 flex justify-end">
-                    {items.length > 1 && (
-                      <button
-                        type="button" onClick={() => removeItem(idx)}
-                        className="text-gray-300 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    {includeDescription && (
+                      <td className="py-2.5 px-3">
+                        <input
+                          className="input text-xs py-1.5"
+                          placeholder="Service / Product Description"
+                          value={item.description}
+                          onChange={e => updateItem(idx, 'description', e.target.value)}
+                          required={includeDescription}
+                        />
+                      </td>
                     )}
-                  </div>
-                </div>
 
-                {customColumns.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-200/60 bg-white/80 p-2.5 rounded-lg">
                     {customColumns.map(col => (
-                      <div key={col}>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">{col}</label>
+                      <td key={col} className="py-2.5 px-3">
                         <input
                           type="text"
-                          className="input py-1 text-xs"
+                          className="input text-xs py-1.5"
                           placeholder={`Enter ${col}`}
                           value={item.customValues?.[col] || ''}
                           onChange={e => updateCustomFieldValue(idx, col, e.target.value)}
                         />
-                      </div>
+                      </td>
                     ))}
-                  </div>
-                )}
-              </div>
-            ))}
+
+                    <td className="py-2.5 px-3 text-right">
+                      <input
+                        className={`input text-xs py-1.5 text-center ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                        type="number" min="1" step="1"
+                        value={item.quantity}
+                        onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                      />
+                    </td>
+
+                    <td className="py-2.5 px-3 text-right">
+                      <input
+                        className={`input text-xs py-1.5 text-right ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                        type="number" min="0" step="1"
+                        placeholder="0"
+                        value={item.unitPrice || ''}
+                        onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
+                      />
+                    </td>
+
+                    <td className="py-2.5 px-3 text-right font-bold text-gray-900">
+                      {currencySymbol} {(Math.max(item.quantity, 0) * Math.max(item.unitPrice, 0)).toLocaleString()}
+                    </td>
+
+                    <td className="py-2.5 px-2 text-center">
+                      {items.length > 1 && (
+                        <button
+                          type="button" onClick={() => removeItem(idx)}
+                          className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                          title="Remove row"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
           {/* Totals */}
