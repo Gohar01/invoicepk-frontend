@@ -51,6 +51,39 @@ export default function EditInvoicePage() {
 
   const [items, setItems] = useState<LineItem[]>([]);
 
+  const serializeState = (
+    f: { clientId: string; issueDate: string; dueDate: string; notes: string },
+    curr: string,
+    taxSel: string,
+    cRate: number,
+    cols: string[],
+    lineItems: LineItem[]
+  ) => {
+    return JSON.stringify({
+      clientId: f.clientId ? f.clientId.trim() : '',
+      issueDate: f.issueDate ? f.issueDate.trim() : '',
+      dueDate: f.dueDate ? f.dueDate.trim() : '',
+      notes: f.notes ? f.notes.trim() : '',
+      currency: curr ? curr.trim() : 'PKR',
+      taxSelection: taxSel ? taxSel.trim() : '18',
+      customRate: Number(cRate) || 0,
+      customColumns: cols.map(c => c.trim()).filter(Boolean),
+      items: lineItems.map(item => {
+        const customVals: Record<string, string> = {};
+        cols.forEach(col => {
+          const val = item.customValues?.[col]?.trim();
+          customVals[col] = val || '';
+        });
+        return {
+          description: item.description ? item.description.trim() : '',
+          quantity: Number(item.quantity) || 0,
+          unitPrice: Number(item.unitPrice) || 0,
+          customValues: customVals,
+        };
+      })
+    });
+  };
+
   useEffect(() => {
     Promise.all([
       api.get('/clients'),
@@ -130,16 +163,16 @@ export default function EditInvoicePage() {
       setCustomColumns(loadedCols);
       setItems(finalItems);
 
-      // Save initial snapshot for dirty checking (Scenario 1)
-      const snapshotObj = {
-        form: loadedForm,
-        currency: inv.currency,
-        taxSelection: loadedTaxSel,
-        customRate: loadedCustomRate,
-        customColumns: loadedCols,
-        items: finalItems
-      };
-      setInitialSnapshot(JSON.stringify(snapshotObj));
+      // Save deterministic initial snapshot for dirty checking (Scenario 1)
+      const initialStr = serializeState(
+        loadedForm,
+        inv.currency,
+        loadedTaxSel,
+        loadedCustomRate,
+        loadedCols,
+        finalItems
+      );
+      setInitialSnapshot(initialStr);
     }).catch(err => {
       setError(err.response?.data?.message ?? 'Failed to load invoice details.');
     }).finally(() => {
@@ -248,14 +281,14 @@ export default function EditInvoicePage() {
   const gstPercent = taxSelection === 'custom' ? customRate : parseFloat(taxSelection);
   const currencySymbol = CURRENCY_SYMBOLS[currency] ?? currency;
 
-  const currentSnapshot = JSON.stringify({
+  const currentSnapshot = serializeState(
     form,
     currency,
     taxSelection,
     customRate,
     customColumns,
     items
-  });
+  );
 
   const isDirty = initialSnapshot !== '' && currentSnapshot !== initialSnapshot;
 

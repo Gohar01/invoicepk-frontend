@@ -193,14 +193,14 @@ export default function CreateInvoicePage() {
         notes:      form.notes,
         items:      items.map(i => {
           let finalDesc = i.description;
-          if (customColumns.length > 0 && i.customValues) {
+          if (customColumns.length > 0) {
             const details = customColumns
-              .map(col => i.customValues?.[col] ? `${col}: ${i.customValues[col]}` : '')
-              .filter(Boolean)
+              .map(col => {
+                const val = i.customValues?.[col]?.trim();
+                return `${col}: ${val && val.length > 0 ? val : '-'}`;
+              })
               .join(' | ');
-            if (details) {
-              finalDesc = `${i.description}\n[${details}]`;
-            }
+            finalDesc = `${i.description}\n[${details}]`;
           }
           return {
             description: finalDesc,
