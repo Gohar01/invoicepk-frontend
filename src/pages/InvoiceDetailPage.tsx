@@ -237,12 +237,12 @@ export default function InvoiceDetailPage() {
                         <div className="overflow-x-auto mb-6 rounded-lg border border-gray-200 shadow-2xs">
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="bg-gray-900 text-white font-semibold">
-                                        <th className="py-3 px-4 text-center rounded-tl-lg w-12">Sr. #</th>
+                                    <tr className="bg-gray-900 text-white font-semibold whitespace-nowrap">
+                                        <th className="py-3 px-4 text-center rounded-tl-lg w-16 whitespace-nowrap">Sr. #</th>
                                         {headers.map(h => (
-                                            <th key={h} className="py-3 px-4 text-left">{h}</th>
+                                            <th key={h} className="py-3 px-4 text-left whitespace-nowrap">{h}</th>
                                         ))}
-                                        <th className="py-3 px-4 text-right rounded-tr-lg w-32">Amount</th>
+                                        <th className="py-3 px-4 text-right rounded-tr-lg w-32 whitespace-nowrap">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -280,13 +280,13 @@ export default function InvoiceDetailPage() {
 
                                         return (
                                             <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
-                                                <td className="py-3 px-4 text-center font-bold text-gray-400">{i + 1}</td>
+                                                <td className="py-3 px-4 text-center font-bold text-gray-400 whitespace-nowrap">{i + 1}</td>
                                                 {headers.map(h => (
                                                     <td key={h} className="py-3 px-4 font-medium text-gray-800">
                                                         {h === 'Description' ? (mainDesc || '—') : (rowVals[h] || '—')}
                                                     </td>
                                                 ))}
-                                                <td className="py-3 px-4 text-right font-bold text-gray-900">{currencySymbol} {item.subTotal.toLocaleString()}</td>
+                                                <td className="py-3 px-4 text-right font-bold text-gray-900 whitespace-nowrap">{currencySymbol} {item.subTotal.toLocaleString()}</td>
                                             </tr>
                                         );
                                     })}

@@ -712,22 +712,22 @@ export default function EditInvoicePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-gray-900 text-white font-semibold">
-                  <th className="py-2.5 px-3 text-center rounded-tl-lg w-12">Sr. #</th>
+                <tr className="bg-gray-900 text-white font-semibold whitespace-nowrap">
+                  <th className="py-2.5 px-3 text-center rounded-tl-lg w-16 whitespace-nowrap">Sr. #</th>
                   {includeDescription && (
-                    <th className="py-2.5 px-3 text-left">Description</th>
+                    <th className="py-2.5 px-3 text-left whitespace-nowrap">Description</th>
                   )}
                   {customColumns.map(col => (
-                    <th key={col} className="py-2.5 px-3 text-left">{col}</th>
+                    <th key={col} className="py-2.5 px-3 text-left whitespace-nowrap">{col}</th>
                   ))}
-                  <th className="py-2.5 px-3 text-right w-36">Amount</th>
+                  <th className="py-2.5 px-3 text-right w-36 whitespace-nowrap">Amount</th>
                   <th className="py-2.5 px-2 text-center rounded-tr-lg w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {items.map((item, idx) => (
                   <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
-                    <td className="py-2.5 px-3 text-center font-bold text-gray-500">
+                    <td className="py-2.5 px-3 text-center font-bold text-gray-500 whitespace-nowrap">
                       {idx + 1}
                     </td>
 
