@@ -63,8 +63,8 @@ export default function CreateInvoicePage() {
   const addCustomColumn = (colName: string) => {
     const trimmed = colName.trim();
     if (!trimmed || customColumns.includes(trimmed)) return;
-    if (customColumns.length >= 6) {
-      alert('Maximum 6 custom columns allowed to preserve printability and PDF formatting.');
+    if (customColumns.length >= 8) {
+      alert('Maximum 8 custom columns allowed to preserve printability and PDF formatting.');
       return;
     }
     setCustomColumns(cols => [...cols, trimmed]);
@@ -265,7 +265,7 @@ export default function CreateInvoicePage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-5xl lg:max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
       </div>
@@ -278,7 +278,7 @@ export default function CreateInvoicePage() {
         )}
 
         {/* Invoice Details */}
-        <div className="card p-6 space-y-4">
+        <div className="card p-5 sm:p-6 space-y-4">
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="label">Client *</label>
@@ -390,7 +390,7 @@ export default function CreateInvoicePage() {
         </div>
 
         {/* Line Items */}
-        <div className="card p-6">
+        <div className="card p-5 sm:p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
             <div>
               <h2 className="font-semibold text-gray-900">Line Items & Custom Columns</h2>
@@ -548,28 +548,28 @@ export default function CreateInvoicePage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gray-900 text-white font-semibold whitespace-nowrap">
-                  <th className="py-2.5 px-3 text-center rounded-tl-lg w-16 whitespace-nowrap">Sr. #</th>
+                  <th className="py-2.5 px-2 text-center rounded-tl-lg w-12 whitespace-nowrap">Sr. #</th>
                   {includeDescription && (
-                    <th className="py-2.5 px-3 text-left whitespace-nowrap">Description</th>
+                    <th className="py-2.5 px-2 text-left whitespace-nowrap">Description</th>
                   )}
                   {customColumns.map(col => (
-                    <th key={col} className="py-2.5 px-3 text-left whitespace-nowrap">{col}</th>
+                    <th key={col} className="py-2.5 px-2 text-left whitespace-nowrap">{col}</th>
                   ))}
-                  <th className="py-2.5 px-3 text-right w-36 whitespace-nowrap">Amount</th>
-                  <th className="py-2.5 px-2 text-center rounded-tr-lg w-10"></th>
+                  <th className="py-2.5 px-2 text-right w-28 whitespace-nowrap">Amount</th>
+                  <th className="py-2.5 px-1.5 text-center rounded-tr-lg w-8"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {items.map((item, idx) => (
                   <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
-                    <td className="py-2.5 px-3 text-center font-bold text-gray-500 whitespace-nowrap">
+                    <td className="py-2 px-2 text-center font-bold text-gray-500 whitespace-nowrap">
                       {idx + 1}
                     </td>
 
                     {includeDescription && (
-                      <td className="py-2.5 px-3">
+                      <td className="py-2 px-2">
                         <input
-                          className={`input text-xs py-1.5 ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                          className={`input text-xs py-1 px-2 ${itemErrors[idx] ? 'border-red-400' : ''}`}
                           placeholder="Service / Product Description"
                           value={item.description}
                           onChange={e => updateItem(idx, 'description', e.target.value)}
@@ -579,10 +579,10 @@ export default function CreateInvoicePage() {
                     )}
 
                     {customColumns.map(col => (
-                      <td key={col} className="py-2.5 px-3">
+                      <td key={col} className="py-2 px-2">
                         <input
                           type="text"
-                          className="input text-xs py-1.5"
+                          className="input text-xs py-1 px-2"
                           placeholder={`Enter ${col}`}
                           value={item.customValues?.[col] || ''}
                           onChange={e => updateCustomFieldValue(idx, col, e.target.value)}
@@ -590,9 +590,9 @@ export default function CreateInvoicePage() {
                       </td>
                     ))}
 
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2 px-2 text-right">
                       <input
-                        className={`input text-xs py-1.5 text-right font-medium ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                        className={`input text-xs py-1 px-2 text-right font-medium ${itemErrors[idx] ? 'border-red-400' : ''}`}
                         type="number"
                         min="0"
                         step="any"
@@ -603,7 +603,7 @@ export default function CreateInvoicePage() {
                       />
                     </td>
 
-                    <td className="py-2.5 px-2 text-center">
+                    <td className="py-2 px-1.5 text-center">
                       {items.length > 1 && (
                         <button
                           type="button" onClick={() => removeItem(idx)}

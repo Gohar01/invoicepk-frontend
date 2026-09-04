@@ -108,7 +108,7 @@ export default function InvoiceDetailPage() {
     const currencySymbol = CURRENCY_SYMBOLS[invoice.currency] ?? invoice.currency;
 
     return (
-        <div className="p-6 max-w-3xl mx-auto">
+        <div className="p-4 sm:p-6 max-w-5xl lg:max-w-6xl mx-auto">
             {/* Navigation Row */}
             <div className="mb-4">
                 <button
@@ -179,7 +179,7 @@ export default function InvoiceDetailPage() {
             </div>
 
             {/* Invoice Card */}
-            <div className="card p-8">
+            <div className="card p-5 sm:p-7">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8">
                     <div>
@@ -235,14 +235,14 @@ export default function InvoiceDetailPage() {
 
                     return (
                         <div className="overflow-x-auto mb-6 rounded-lg border border-gray-200 shadow-2xs">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-xs sm:text-sm">
                                 <thead>
                                     <tr className="bg-gray-900 text-white font-semibold whitespace-nowrap">
-                                        <th className="py-3 px-4 text-center rounded-tl-lg w-16 whitespace-nowrap">Sr. #</th>
+                                        <th className="py-2.5 px-3 text-center rounded-tl-lg w-12 whitespace-nowrap">Sr. #</th>
                                         {headers.map(h => (
-                                            <th key={h} className="py-3 px-4 text-left whitespace-nowrap">{h}</th>
+                                            <th key={h} className="py-2.5 px-3 text-left whitespace-nowrap">{h}</th>
                                         ))}
-                                        <th className="py-3 px-4 text-right rounded-tr-lg w-32 whitespace-nowrap">Amount</th>
+                                        <th className="py-2.5 px-3 text-right rounded-tr-lg w-28 whitespace-nowrap">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -280,13 +280,13 @@ export default function InvoiceDetailPage() {
 
                                         return (
                                             <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'}>
-                                                <td className="py-3 px-4 text-center font-bold text-gray-400 whitespace-nowrap">{i + 1}</td>
+                                                <td className="py-2.5 px-3 text-center font-bold text-gray-400 whitespace-nowrap">{i + 1}</td>
                                                 {headers.map(h => (
-                                                    <td key={h} className="py-3 px-4 font-medium text-gray-800">
+                                                    <td key={h} className="py-2.5 px-3 font-medium text-gray-800">
                                                         {h === 'Description' ? (mainDesc || '—') : (rowVals[h] || '—')}
                                                     </td>
                                                 ))}
-                                                <td className="py-3 px-4 text-right font-bold text-gray-900 whitespace-nowrap">{currencySymbol} {item.subTotal.toLocaleString()}</td>
+                                                <td className="py-2.5 px-3 text-right font-bold text-gray-900 whitespace-nowrap">{currencySymbol} {item.subTotal.toLocaleString()}</td>
                                             </tr>
                                         );
                                     })}
