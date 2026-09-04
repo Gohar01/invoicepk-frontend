@@ -38,7 +38,7 @@ export interface Invoice {
     issueDate: string;
     dueDate: string;
     totalAmount: number;
-    status: 'Draft' | 'Sent' | 'Paid' | 'Overdue';
+    status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
     createdAt: string;
 }
 

@@ -12,6 +12,8 @@ import InvoiceDetailPage from './pages/InvoiceDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import LandingPage from './pages/LandingPage';
 
+import EditInvoicePage from './pages/EditInvoicePage';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
@@ -64,6 +66,13 @@ function AppRoutes() {
         <ProtectedRoute>
           <Layout>
             <InvoiceDetailPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/invoices/:id/edit" element={
+        <ProtectedRoute>
+          <Layout>
+            <EditInvoicePage />
           </Layout>
         </ProtectedRoute>
       } />

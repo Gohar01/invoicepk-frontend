@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Download, Send, Bell, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Download, Send, Bell, ArrowLeft, CheckCircle, Edit3, Trash2, XCircle } from 'lucide-react';
 import api from '../services/api';
 import { InvoiceDetail, CURRENCY_SYMBOLS } from '../types';
 
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
         Draft: 'badge-draft', Sent: 'badge-sent',
-        Paid: 'badge-paid', Overdue: 'badge-overdue'
+        Paid: 'badge-paid', Overdue: 'badge-overdue',
+        Cancelled: 'bg-gray-100 text-gray-600 border border-gray-200 rounded-full font-semibold'
     };
     return map[status] ?? 'badge-draft';
 };
@@ -73,6 +74,30 @@ export default function InvoiceDetailPage() {
         } finally { setWorking(false); }
     };
 
+    const cancelInvoice = async () => {
+        if (!invoice) return;
+        if (!confirm(`Cancel Invoice #${invoice.invoiceNumber}? This will mark it as Cancelled and remove it from active unpaid totals.`)) return;
+        setWorking(true);
+        try {
+            await api.put(`/invoices/${id}/status`, { status: 'Cancelled' });
+            load();
+        } catch (err: any) {
+            alert(err.response?.data?.message ?? 'Failed to cancel invoice.');
+        } finally { setWorking(false); }
+    };
+
+    const deleteInvoice = async () => {
+        if (!invoice || invoice.status !== 'Draft') return;
+        if (!confirm(`Are you sure you want to delete Draft Invoice #${invoice.invoiceNumber}? This action cannot be undone.`)) return;
+        setWorking(true);
+        try {
+            await api.delete(`/invoices/${id}`);
+            navigate('/invoices');
+        } catch (err: any) {
+            alert(err.response?.data?.message ?? 'Failed to delete invoice.');
+        } finally { setWorking(false); }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center h-full">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -85,30 +110,64 @@ export default function InvoiceDetailPage() {
     return (
         <div className="p-6 max-w-3xl mx-auto">
             {/* Back + Actions */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                 <button
                     onClick={() => navigate('/invoices')}
-                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm"
+                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium"
                 >
                     <ArrowLeft size={16} /> Back to Invoices
                 </button>
-                <div className="flex gap-2">
-                    <button onClick={downloadPdf} disabled={working} className="btn-secondary flex items-center gap-2 text-sm">
-                        <Download size={15} /> PDF
-                    </button>
-                    {invoice.status !== 'Paid' && (
-                        <button onClick={sendInvoice} disabled={working} className="btn-secondary flex items-center gap-2 text-sm">
-                            <Send size={15} /> Send
+
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* EDIT: Available ONLY on Draft, Sent, and Overdue */}
+                    {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
+                        <button
+                            onClick={() => navigate(`/invoices/${id}/edit`)}
+                            disabled={working}
+                            className="btn-secondary flex items-center gap-1.5 text-sm font-semibold"
+                        >
+                            <Edit3 size={15} /> Edit
                         </button>
                     )}
+
+                    <button onClick={downloadPdf} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
+                        <Download size={15} /> PDF
+                    </button>
+
+                    {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
+                        <button onClick={sendInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
+                            <Send size={15} /> {invoice.status === 'Sent' || invoice.status === 'Overdue' ? 'Re-Send' : 'Send'}
+                        </button>
+                    )}
+
                     {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
-                        <button onClick={sendReminder} disabled={working} className="btn-secondary flex items-center gap-2 text-sm">
+                        <button onClick={sendReminder} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
                             <Bell size={15} /> Remind
                         </button>
                     )}
-                    {invoice.status !== 'Paid' && (
-                        <button onClick={markPaid} disabled={working} className="btn-primary flex items-center gap-2 text-sm">
+
+                    {/* CANCEL: Available on Sent and Overdue */}
+                    {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
+                        <button onClick={cancelInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 border-amber-200">
+                            <XCircle size={15} /> Cancel Invoice
+                        </button>
+                    )}
+
+                    {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
+                        <button onClick={markPaid} disabled={working} className="btn-primary flex items-center gap-1.5 text-sm font-bold">
                             <CheckCircle size={15} /> Mark Paid
+                        </button>
+                    )}
+
+                    {/* DELETE: Shown ONLY on Draft invoices */}
+                    {invoice.status === 'Draft' && (
+                        <button
+                            onClick={deleteInvoice}
+                            disabled={working}
+                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors flex items-center gap-1 ml-1"
+                            title="Delete Draft Invoice"
+                        >
+                            <Trash2 size={14} /> Delete Draft
                         </button>
                     )}
                 </div>
