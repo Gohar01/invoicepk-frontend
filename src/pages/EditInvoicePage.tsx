@@ -40,6 +40,7 @@ export default function EditInvoicePage() {
   const [showSendModal, setShowSendModal] = useState(false);
   const [savedInvoiceNumber, setSavedInvoiceNumber] = useState('');
   const [clientEmail, setClientEmail]     = useState('');
+  const [initialSnapshot, setInitialSnapshot] = useState('');
 
   const [form, setForm] = useState({
     clientId: '',
@@ -67,20 +68,25 @@ export default function EditInvoicePage() {
       setSavedInvoiceNumber(inv.invoiceNumber);
       setClientEmail(inv.client.email || '');
 
-      setForm({
+      const loadedForm = {
         clientId: inv.client.id.toString(),
         issueDate: inv.issueDate,
         dueDate: inv.dueDate,
         notes: inv.notes || '',
-      });
-
+      };
+      setForm(loadedForm);
       setCurrency(inv.currency);
 
       const gst = inv.gstPercent;
       const matchedTax = TAX_RATE_OPTIONS.find(t => typeof t.value === 'number' && t.value === gst);
+      let loadedTaxSel = '18';
+      let loadedCustomRate = 0;
       if (matchedTax) {
-        setTaxSelection(gst.toString());
+        loadedTaxSel = gst.toString();
+        setTaxSelection(loadedTaxSel);
       } else {
+        loadedTaxSel = 'custom';
+        loadedCustomRate = gst;
         setTaxSelection('custom');
         setCustomRate(gst);
       }
@@ -96,10 +102,16 @@ export default function EditInvoicePage() {
           desc = parts[0];
           const detailsStr = parts[1].replace(']', '');
           detailsStr.split(' | ').forEach(pair => {
-            const [k, v] = pair.split(': ');
-            if (k && v) {
-              parsedColumnsSet.add(k);
-              customVals[k] = v;
+            const colonIdx = pair.indexOf(': ');
+            if (colonIdx !== -1) {
+              const k = pair.substring(0, colonIdx).trim();
+              const v = pair.substring(colonIdx + 2).trim();
+              if (k) {
+                parsedColumnsSet.add(k);
+                if (v !== '-') {
+                  customVals[k] = v;
+                }
+              }
             }
           });
         }
@@ -112,8 +124,22 @@ export default function EditInvoicePage() {
         };
       });
 
-      setCustomColumns(Array.from(parsedColumnsSet));
-      setItems(parsedItems.length > 0 ? parsedItems : [{ description: '', quantity: 1, unitPrice: 0, customValues: {} }]);
+      const loadedCols = Array.from(parsedColumnsSet);
+      const finalItems = parsedItems.length > 0 ? parsedItems : [{ description: '', quantity: 1, unitPrice: 0, customValues: {} }];
+
+      setCustomColumns(loadedCols);
+      setItems(finalItems);
+
+      // Save initial snapshot for dirty checking (Scenario 1)
+      const snapshotObj = {
+        form: loadedForm,
+        currency: inv.currency,
+        taxSelection: loadedTaxSel,
+        customRate: loadedCustomRate,
+        customColumns: loadedCols,
+        items: finalItems
+      };
+      setInitialSnapshot(JSON.stringify(snapshotObj));
     }).catch(err => {
       setError(err.response?.data?.message ?? 'Failed to load invoice details.');
     }).finally(() => {
@@ -222,6 +248,17 @@ export default function EditInvoicePage() {
   const gstPercent = taxSelection === 'custom' ? customRate : parseFloat(taxSelection);
   const currencySymbol = CURRENCY_SYMBOLS[currency] ?? currency;
 
+  const currentSnapshot = JSON.stringify({
+    form,
+    currency,
+    taxSelection,
+    customRate,
+    customColumns,
+    items
+  });
+
+  const isDirty = initialSnapshot !== '' && currentSnapshot !== initialSnapshot;
+
   const subTotal  = items.reduce((s, i) => s + Math.max(i.quantity, 0) * Math.max(i.unitPrice, 0), 0);
   const gstAmount = Math.round(subTotal * (gstPercent / 100) * 100) / 100;
   const total     = subTotal + gstAmount;
@@ -258,14 +295,14 @@ export default function EditInvoicePage() {
         notes:      form.notes,
         items:      items.map(i => {
           let finalDesc = i.description;
-          if (customColumns.length > 0 && i.customValues) {
+          if (customColumns.length > 0) {
             const details = customColumns
-              .map(col => i.customValues?.[col] ? `${col}: ${i.customValues[col]}` : '')
-              .filter(Boolean)
+              .map(col => {
+                const val = i.customValues?.[col]?.trim();
+                return `${col}: ${val && val.length > 0 ? val : '-'}`;
+              })
               .join(' | ');
-            if (details) {
-              finalDesc = `${i.description}\n[${details}]`;
-            }
+            finalDesc = `${i.description}\n[${details}]`;
           }
           return {
             description: finalDesc,
@@ -637,8 +674,12 @@ export default function EditInvoicePage() {
           <button type="button" onClick={() => navigate(`/invoices/${id}`)} className="btn-secondary">
             Cancel
           </button>
-          <button type="submit" className="btn-primary px-8" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
+          <button
+            type="submit"
+            className={`btn-primary px-8 transition-all ${!isDirty ? 'opacity-50 cursor-not-allowed bg-slate-400 border-slate-400 text-slate-200 hover:bg-slate-400' : ''}`}
+            disabled={saving || !isDirty}
+          >
+            {saving ? 'Saving...' : !isDirty ? 'No Changes' : 'Save Changes'}
           </button>
         </div>
       </form>
