@@ -228,6 +228,9 @@ export default function InvoiceDetailPage() {
                         const detailsStr = firstItem.description.split('\n[')[1].replace(']', '');
                         const legacyCols = detailsStr.split(' | ').map(p => p.split(': ')[0]).filter(Boolean);
                         headers = ['Description', ...legacyCols];
+                    } else if (invoice.items.some(x => x.quantity !== 1 || x.unitPrice !== x.subTotal)) {
+                        // Legacy invoices that explicitly had quantity/price
+                        headers = ['Description', 'Qty', 'Unit Price'];
                     }
 
                     return (
@@ -239,12 +242,6 @@ export default function InvoiceDetailPage() {
                                         {headers.map(h => (
                                             <th key={h} className="py-3 px-4 text-left">{h}</th>
                                         ))}
-                                        {!headers.includes('Qty') && !headers.includes('Quantity') && (
-                                            <th className="py-3 px-4 text-center w-20">Qty</th>
-                                        )}
-                                        {!headers.includes('Unit Price') && !headers.includes('Price') && (
-                                            <th className="py-3 px-4 text-right w-28">Unit Price</th>
-                                        )}
                                         <th className="py-3 px-4 text-right rounded-tr-lg w-32">Amount</th>
                                     </tr>
                                 </thead>
@@ -277,6 +274,8 @@ export default function InvoiceDetailPage() {
                                             });
                                         } else {
                                             rowVals['Description'] = item.description;
+                                            rowVals['Qty'] = item.quantity.toString();
+                                            rowVals['Unit Price'] = `${currencySymbol} ${item.unitPrice.toLocaleString()}`;
                                         }
 
                                         return (
@@ -284,15 +283,9 @@ export default function InvoiceDetailPage() {
                                                 <td className="py-3 px-4 text-center font-bold text-gray-400">{i + 1}</td>
                                                 {headers.map(h => (
                                                     <td key={h} className="py-3 px-4 font-medium text-gray-800">
-                                                        {h === 'Description' ? mainDesc : (rowVals[h] || '—')}
+                                                        {h === 'Description' ? (mainDesc || '—') : (rowVals[h] || '—')}
                                                     </td>
                                                 ))}
-                                                {!headers.includes('Qty') && !headers.includes('Quantity') && (
-                                                    <td className="py-3 px-4 text-center text-gray-600">{item.quantity}</td>
-                                                )}
-                                                {!headers.includes('Unit Price') && !headers.includes('Price') && (
-                                                    <td className="py-3 px-4 text-right text-gray-600">{currencySymbol} {item.unitPrice.toLocaleString()}</td>
-                                                )}
                                                 <td className="py-3 px-4 text-right font-bold text-gray-900">{currencySymbol} {item.subTotal.toLocaleString()}</td>
                                             </tr>
                                         );

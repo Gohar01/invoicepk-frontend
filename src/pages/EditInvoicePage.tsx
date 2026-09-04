@@ -6,8 +6,7 @@ import { Client, CURRENCY_OPTIONS, CURRENCY_SYMBOLS, InvoiceDetail } from '../ty
 
 interface LineItem { 
   description: string; 
-  quantity: number; 
-  unitPrice: number; 
+  amount: number; 
   customValues?: Record<string, string>;
 }
 
@@ -58,6 +57,7 @@ export default function EditInvoicePage() {
     taxSel: string,
     cRate: number,
     cols: string[],
+    includeDesc: boolean,
     lineItems: LineItem[]
   ) => {
     return JSON.stringify({
@@ -69,6 +69,7 @@ export default function EditInvoicePage() {
       taxSelection: taxSel ? taxSel.trim() : '18',
       customRate: Number(cRate) || 0,
       customColumns: cols.map(c => c.trim()).filter(Boolean),
+      includeDescription: Boolean(includeDesc),
       items: lineItems.map(item => {
         const customVals: Record<string, string> = {};
         cols.forEach(col => {
@@ -77,8 +78,7 @@ export default function EditInvoicePage() {
         });
         return {
           description: item.description ? item.description.trim() : '',
-          quantity: Number(item.quantity) || 0,
-          unitPrice: Number(item.unitPrice) || 0,
+          amount: Number(item.amount) || 0,
           customValues: customVals,
         };
       })
@@ -174,14 +174,13 @@ export default function EditInvoicePage() {
 
         return {
           description: desc,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
+          amount: Number(item.quantity) * Number(item.unitPrice),
           customValues: customVals,
         };
       });
 
       const loadedCols = Array.from(parsedColumnsSet);
-      const finalItems = parsedItems.length > 0 ? parsedItems : [{ description: '', quantity: 1, unitPrice: 0, customValues: {} }];
+      const finalItems = parsedItems.length > 0 ? parsedItems : [{ description: '', amount: 0, customValues: {} }];
 
       setIncludeDescription(detectedHasDescription);
       setCustomColumns(loadedCols);
@@ -194,6 +193,7 @@ export default function EditInvoicePage() {
         loadedTaxSel,
         loadedCustomRate,
         loadedCols,
+        detectedHasDescription,
         finalItems
       );
       setInitialSnapshot(initialStr);
@@ -252,18 +252,24 @@ export default function EditInvoicePage() {
     });
   };
 
-  const applyPresetColumns = (preset: 'transport' | 'retail' | 'contractor') => {
+  const applyPresetColumns = (preset: 'transport' | 'retail' | 'contractor' | 'services') => {
     if (preset === 'transport') {
+      setIncludeDescription(false);
       setCustomColumns(['Bilty No.', 'Vehicle No.', 'Station', 'Capacity']);
     } else if (preset === 'retail') {
-      setCustomColumns(['Batch No.', 'Expiry Date', 'SKU / Barcode']);
+      setIncludeDescription(true);
+      setCustomColumns(['Batch No.', 'Expiry Date', 'SKU']);
     } else if (preset === 'contractor') {
-      setCustomColumns(['PO Number', 'Location', 'Unit / Rate']);
+      setIncludeDescription(true);
+      setCustomColumns(['PO Number', 'Location']);
+    } else if (preset === 'services') {
+      setIncludeDescription(true);
+      setCustomColumns(['Qty', 'Unit Price']);
     }
   };
 
   const addItem = () =>
-    setItems(i => [...i, { description: '', quantity: 1, unitPrice: 0, customValues: {} }]);
+    setItems(i => [...i, { description: '', amount: 0, customValues: {} }]);
 
   const removeItem = (idx: number) => {
     setItems(i => i.filter((_, j) => j !== idx));
@@ -275,8 +281,12 @@ export default function EditInvoicePage() {
   };
 
   const validateItem = (item: LineItem): string | null => {
-    if (item.quantity <= 0) return 'Quantity must be greater than 0';
-    if (item.unitPrice <= 0) return 'Unit price must be greater than 0';
+    if (includeDescription && !item.description.trim()) {
+      return 'Description is required';
+    }
+    if (item.amount === undefined || item.amount < 0) {
+      return 'Amount cannot be negative';
+    }
     return null;
   };
 
@@ -292,12 +302,26 @@ export default function EditInvoicePage() {
   const updateCustomFieldValue = (itemIdx: number, colName: string, value: string) => {
     setItems(i => i.map((item, j) => {
       if (j !== itemIdx) return item;
+      const updatedCustomValues = {
+        ...(item.customValues || {}),
+        [colName]: value
+      };
+
+      let updatedAmount = item.amount;
+      const qCol = customColumns.find(c => /^(qty|quantity)$/i.test(c.trim()));
+      const pCol = customColumns.find(c => /^(price|unit\s*price|rate)$/i.test(c.trim()));
+      if (qCol && pCol && (colName === qCol || colName === pCol)) {
+        const qVal = parseFloat(updatedCustomValues[qCol] || '0') || 0;
+        const pVal = parseFloat(updatedCustomValues[pCol] || '0') || 0;
+        if (qVal > 0 && pVal > 0) {
+          updatedAmount = qVal * pVal;
+        }
+      }
+
       return {
         ...item,
-        customValues: {
-          ...(item.customValues || {}),
-          [colName]: value
-        }
+        amount: updatedAmount,
+        customValues: updatedCustomValues
       };
     }));
   };
@@ -311,12 +335,13 @@ export default function EditInvoicePage() {
     taxSelection,
     customRate,
     customColumns,
+    includeDescription,
     items
   );
 
   const isDirty = initialSnapshot !== '' && currentSnapshot !== initialSnapshot;
 
-  const subTotal  = items.reduce((s, i) => s + Math.max(i.quantity, 0) * Math.max(i.unitPrice, 0), 0);
+  const subTotal  = items.reduce((s, i) => s + Math.max(i.amount || 0, 0), 0);
   const gstAmount = Math.round(subTotal * (gstPercent / 100) * 100) / 100;
   const total     = subTotal + gstAmount;
 
@@ -325,7 +350,7 @@ export default function EditInvoicePage() {
     setError('');
 
     if (!form.clientId) { setError('Please select a client.'); return; }
-    if (items.some(i => !i.description.trim())) {
+    if (includeDescription && items.some(i => !i.description.trim())) {
       setError('All items need a description.');
       return;
     }
@@ -356,7 +381,9 @@ export default function EditInvoicePage() {
         gstPercent: gstPercent,
         notes:      form.notes,
         items:      items.map(i => {
-          const mainDesc = includeDescription ? (i.description.trim() || 'Item') : (customColumns.length > 0 && i.customValues?.[customColumns[0]] ? i.customValues[customColumns[0]] : 'Item');
+          const mainDesc = includeDescription
+            ? (i.description.trim() || 'Item')
+            : (customColumns.length > 0 && i.customValues?.[customColumns[0]] ? i.customValues[customColumns[0]] : 'Item');
 
           const colDetails = activeCols.map(col => {
             if (col === 'Description') return `Description: ${i.description.trim() || '-'}`;
@@ -366,10 +393,22 @@ export default function EditInvoicePage() {
 
           const finalDesc = `${mainDesc}\n[COLS:${activeCols.join('|')}]\n[VALS:${colDetails}]`;
 
+          const qCol = customColumns.find(c => /^(qty|quantity)$/i.test(c.trim()));
+          const pCol = customColumns.find(c => /^(price|unit\s*price|rate)$/i.test(c.trim()));
+          let q = 1;
+          let p = Math.max(i.amount || 0, 0);
+
+          if (qCol && pCol) {
+            const parsedQ = parseFloat(i.customValues?.[qCol] || '0');
+            const parsedP = parseFloat(i.customValues?.[pCol] || '0');
+            if (parsedQ > 0) q = parsedQ;
+            if (parsedP > 0) p = parsedP;
+          }
+
           return {
             description: finalDesc,
-            quantity:    Math.max(i.quantity, 1),
-            unitPrice:   Math.max(i.unitPrice, 0),
+            quantity: q,
+            unitPrice: p,
           };
         }),
       });
@@ -556,7 +595,14 @@ export default function EditInvoicePage() {
                   onClick={() => applyPresetColumns('contractor')}
                   className="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:border-primary hover:text-primary transition-all shadow-sm"
                 >
-                  🏗️ Contractor / Services
+                  🏗️ Contractor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPresetColumns('services')}
+                  className="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:border-primary hover:text-primary transition-all shadow-sm"
+                >
+                  💼 IT / Freelancer (Qty + Price)
                 </button>
               </div>
             </div>
@@ -617,7 +663,7 @@ export default function EditInvoicePage() {
 
               <span className="inline-flex items-center gap-1 bg-slate-200 text-slate-800 text-xs font-bold px-2 py-1 rounded-md">
                 <span>Amount</span>
-                <span className="text-[10px] text-slate-500 font-normal">(Auto)</span>
+                <span className="text-[10px] text-slate-500 font-normal">(Mandatory)</span>
               </span>
 
               {!showColInput ? (
@@ -674,9 +720,7 @@ export default function EditInvoicePage() {
                   {customColumns.map(col => (
                     <th key={col} className="py-2.5 px-3 text-left">{col}</th>
                   ))}
-                  <th className="py-2.5 px-3 text-right w-28">Qty</th>
-                  <th className="py-2.5 px-3 text-right w-32">Unit Price</th>
-                  <th className="py-2.5 px-3 text-right w-32">Amount</th>
+                  <th className="py-2.5 px-3 text-right w-36">Amount</th>
                   <th className="py-2.5 px-2 text-center rounded-tr-lg w-10"></th>
                 </tr>
               </thead>
@@ -690,7 +734,7 @@ export default function EditInvoicePage() {
                     {includeDescription && (
                       <td className="py-2.5 px-3">
                         <input
-                          className="input text-xs py-1.5"
+                          className={`input text-xs py-1.5 ${itemErrors[idx] ? 'border-red-400' : ''}`}
                           placeholder="Service / Product Description"
                           value={item.description}
                           onChange={e => updateItem(idx, 'description', e.target.value)}
@@ -713,25 +757,15 @@ export default function EditInvoicePage() {
 
                     <td className="py-2.5 px-3 text-right">
                       <input
-                        className={`input text-xs py-1.5 text-center ${itemErrors[idx] ? 'border-red-400' : ''}`}
-                        type="number" min="1" step="1"
-                        value={item.quantity}
-                        onChange={e => updateItem(idx, 'quantity', parseFloat(e.target.value) || 0)}
+                        className={`input text-xs py-1.5 text-right font-medium ${itemErrors[idx] ? 'border-red-400' : ''}`}
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="0.00"
+                        value={item.amount !== undefined && item.amount !== 0 ? item.amount : (item.amount === 0 ? '' : item.amount)}
+                        onChange={e => updateItem(idx, 'amount', parseFloat(e.target.value) || 0)}
+                        required
                       />
-                    </td>
-
-                    <td className="py-2.5 px-3 text-right">
-                      <input
-                        className={`input text-xs py-1.5 text-right ${itemErrors[idx] ? 'border-red-400' : ''}`}
-                        type="number" min="0" step="1"
-                        placeholder="0"
-                        value={item.unitPrice || ''}
-                        onChange={e => updateItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      />
-                    </td>
-
-                    <td className="py-2.5 px-3 text-right font-bold text-gray-900">
-                      {currencySymbol} {(Math.max(item.quantity, 0) * Math.max(item.unitPrice, 0)).toLocaleString()}
                     </td>
 
                     <td className="py-2.5 px-2 text-center">
