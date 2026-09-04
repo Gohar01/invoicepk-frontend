@@ -396,6 +396,18 @@ export default function EditInvoicePage() {
             </div>
           </div>
 
+          {taxSelection === 'custom' && (
+            <div>
+              <label className="label">Custom Tax %</label>
+              <input
+                className="input" type="number" min="0" max="100" step="0.5"
+                placeholder="e.g. 15"
+                value={customRate || ''}
+                onChange={e => setCustomRate(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+          )}
+
           <div>
             <label className="label">Notes</label>
             <input

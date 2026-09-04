@@ -109,52 +109,57 @@ export default function InvoiceDetailPage() {
 
     return (
         <div className="p-6 max-w-3xl mx-auto">
-            {/* Back + Actions */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            {/* Navigation Row */}
+            <div className="mb-4">
                 <button
                     onClick={() => navigate('/invoices')}
-                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium"
                 >
                     <ArrowLeft size={16} /> Back to Invoices
                 </button>
+            </div>
 
+            {/* Clean Action Toolbar Row */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6 bg-slate-50 border border-slate-200/80 p-3 rounded-xl shadow-xs">
                 <div className="flex flex-wrap items-center gap-2">
                     {/* EDIT: Available ONLY on Draft, Sent, and Overdue */}
                     {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
                         <button
                             onClick={() => navigate(`/invoices/${id}/edit`)}
                             disabled={working}
-                            className="btn-secondary flex items-center gap-1.5 text-sm font-semibold"
+                            className="btn-secondary flex items-center gap-1.5 text-sm font-semibold shadow-xs"
                         >
                             <Edit3 size={15} /> Edit
                         </button>
                     )}
 
-                    <button onClick={downloadPdf} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
+                    <button onClick={downloadPdf} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                         <Download size={15} /> PDF
                     </button>
 
                     {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
-                        <button onClick={sendInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
+                        <button onClick={sendInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                             <Send size={15} /> {invoice.status === 'Sent' || invoice.status === 'Overdue' ? 'Re-Send' : 'Send'}
                         </button>
                     )}
 
                     {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
-                        <button onClick={sendReminder} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium">
+                        <button onClick={sendReminder} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                             <Bell size={15} /> Remind
                         </button>
                     )}
 
                     {/* CANCEL: Available on Sent and Overdue */}
                     {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
-                        <button onClick={cancelInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 border-amber-200">
+                        <button onClick={cancelInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 border-amber-200 shadow-xs">
                             <XCircle size={15} /> Cancel Invoice
                         </button>
                     )}
+                </div>
 
+                <div className="flex items-center gap-2">
                     {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
-                        <button onClick={markPaid} disabled={working} className="btn-primary flex items-center gap-1.5 text-sm font-bold">
+                        <button onClick={markPaid} disabled={working} className="btn-primary flex items-center gap-1.5 text-sm font-bold shadow-xs">
                             <CheckCircle size={15} /> Mark Paid
                         </button>
                     )}
@@ -164,7 +169,7 @@ export default function InvoiceDetailPage() {
                         <button
                             onClick={deleteInvoice}
                             disabled={working}
-                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors flex items-center gap-1 ml-1"
+                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors flex items-center gap-1 shadow-xs"
                             title="Delete Draft Invoice"
                         >
                             <Trash2 size={14} /> Delete Draft

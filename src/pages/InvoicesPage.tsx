@@ -7,12 +7,13 @@ import { Invoice, CURRENCY_SYMBOLS } from '../types';
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
         Draft: 'badge-draft', Sent: 'badge-sent',
-        Paid: 'badge-paid', Overdue: 'badge-overdue'
+        Paid: 'badge-paid', Overdue: 'badge-overdue',
+        Cancelled: 'bg-gray-100 text-gray-600 border border-gray-200 rounded-full font-semibold'
     };
     return map[status] ?? 'badge-draft';
 };
 
-const FILTERS = ['All', 'Draft', 'Sent', 'Paid', 'Overdue'];
+const FILTERS = ['All', 'Draft', 'Sent', 'Paid', 'Overdue', 'Cancelled'];
 
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
