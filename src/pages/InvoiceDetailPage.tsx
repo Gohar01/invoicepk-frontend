@@ -8,7 +8,7 @@ const statusBadge = (status: string) => {
     const map: Record<string, string> = {
         Draft: 'badge-draft', Sent: 'badge-sent',
         Paid: 'badge-paid', Overdue: 'badge-overdue',
-        Cancelled: 'bg-gray-100 text-gray-600 border border-gray-200 rounded-full font-semibold'
+        Cancelled: 'badge-cancelled'
     };
     return map[status] ?? 'badge-draft';
 };

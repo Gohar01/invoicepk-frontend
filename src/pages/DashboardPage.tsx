@@ -8,7 +8,8 @@ import { useAuth } from '../context/AuthContext';
 const statusBadge = (status: string) => {
   const map: Record<string, string> = {
     Draft: 'badge-draft', Sent: 'badge-sent',
-    Paid: 'badge-paid', Overdue: 'badge-overdue'
+    Paid: 'badge-paid', Overdue: 'badge-overdue',
+    Cancelled: 'badge-cancelled'
   };
   return map[status] ?? 'badge-draft';
 };
