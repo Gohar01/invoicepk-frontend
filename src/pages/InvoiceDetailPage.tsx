@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Download, Send, Bell, ArrowLeft, CheckCircle, Edit3, Trash2, XCircle } from 'lucide-react';
 import api from '../services/api';
 import { InvoiceDetail, CURRENCY_SYMBOLS } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../context/ToastContext';
 
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -19,6 +21,8 @@ export default function InvoiceDetailPage() {
     const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [working, setWorking] = useState(false);
+    const [activeModal, setActiveModal] = useState<'send' | 'remind' | 'markPaid' | 'cancel' | 'delete' | null>(null);
+    const { toast } = useToast();
 
     const load = () => {
         api.get(`/invoices/${id}`)
@@ -42,60 +46,37 @@ export default function InvoiceDetailPage() {
         } finally { setWorking(false); }
     };
 
-    const sendInvoice = async () => {
-        if (!confirm('Send this invoice to the client?')) return;
+    const handleConfirmAction = async () => {
+        if (!invoice || !activeModal) return;
         setWorking(true);
         try {
-            await api.post(`/invoices/${id}/send`);
-            alert('Invoice sent!');
-            load();
+            if (activeModal === 'send') {
+                await api.post(`/invoices/${id}/send`);
+                toast.success(`Invoice sent to ${invoice.client.email || 'the client'} successfully!`);
+                load();
+            } else if (activeModal === 'remind') {
+                await api.post(`/invoices/${id}/remind`);
+                toast.success('Payment reminder sent successfully!');
+            } else if (activeModal === 'markPaid') {
+                await api.put(`/invoices/${id}/status`, { status: 'Paid' });
+                toast.success(`Invoice #${invoice.invoiceNumber} marked as Paid!`);
+                load();
+            } else if (activeModal === 'cancel') {
+                await api.put(`/invoices/${id}/status`, { status: 'Cancelled' });
+                toast.warning(`Invoice #${invoice.invoiceNumber} has been cancelled.`);
+                load();
+            } else if (activeModal === 'delete') {
+                await api.delete(`/invoices/${id}`);
+                toast.success(`Draft Invoice #${invoice.invoiceNumber} deleted.`);
+                navigate('/invoices');
+                return;
+            }
+            setActiveModal(null);
         } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed to send.');
-        } finally { setWorking(false); }
-    };
-
-    const sendReminder = async () => {
-        if (!confirm('Send a payment reminder?')) return;
-        setWorking(true);
-        try {
-            await api.post(`/invoices/${id}/remind`);
-            alert('Reminder sent!');
-        } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed.');
-        } finally { setWorking(false); }
-    };
-
-    const markPaid = async () => {
-        if (!confirm('Mark this invoice as Paid?')) return;
-        setWorking(true);
-        try {
-            await api.put(`/invoices/${id}/status`, { status: 'Paid' });
-            load();
-        } finally { setWorking(false); }
-    };
-
-    const cancelInvoice = async () => {
-        if (!invoice) return;
-        if (!confirm(`Cancel Invoice #${invoice.invoiceNumber}? This will mark it as Cancelled and remove it from active unpaid totals.`)) return;
-        setWorking(true);
-        try {
-            await api.put(`/invoices/${id}/status`, { status: 'Cancelled' });
-            load();
-        } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed to cancel invoice.');
-        } finally { setWorking(false); }
-    };
-
-    const deleteInvoice = async () => {
-        if (!invoice || invoice.status !== 'Draft') return;
-        if (!confirm(`Are you sure you want to delete Draft Invoice #${invoice.invoiceNumber}? This action cannot be undone.`)) return;
-        setWorking(true);
-        try {
-            await api.delete(`/invoices/${id}`);
-            navigate('/invoices');
-        } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed to delete invoice.');
-        } finally { setWorking(false); }
+            toast.error(err.response?.data?.message ?? 'Action failed. Please try again.');
+        } finally {
+            setWorking(false);
+        }
     };
 
     if (loading) return (
@@ -138,20 +119,20 @@ export default function InvoiceDetailPage() {
                     </button>
 
                     {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
-                        <button onClick={sendInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
+                        <button onClick={() => setActiveModal('send')} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                             <Send size={15} /> {invoice.status === 'Sent' || invoice.status === 'Overdue' ? 'Re-Send' : 'Send'}
                         </button>
                     )}
 
                     {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
-                        <button onClick={sendReminder} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
+                        <button onClick={() => setActiveModal('remind')} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                             <Bell size={15} /> Remind
                         </button>
                     )}
 
                     {/* CANCEL: Available on Sent and Overdue */}
                     {(invoice.status === 'Sent' || invoice.status === 'Overdue') && (
-                        <button onClick={cancelInvoice} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 border-amber-200 shadow-xs">
+                        <button onClick={() => setActiveModal('cancel')} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50 border-amber-200 shadow-xs">
                             <XCircle size={15} /> Cancel Invoice
                         </button>
                     )}
@@ -159,7 +140,7 @@ export default function InvoiceDetailPage() {
 
                 <div className="flex items-center gap-2">
                     {invoice.status !== 'Paid' && invoice.status !== 'Cancelled' && (
-                        <button onClick={markPaid} disabled={working} className="btn-primary flex items-center gap-1.5 text-sm font-bold shadow-xs">
+                        <button onClick={() => setActiveModal('markPaid')} disabled={working} className="btn-primary flex items-center gap-1.5 text-sm font-bold shadow-xs">
                             <CheckCircle size={15} /> Mark Paid
                         </button>
                     )}
@@ -167,7 +148,7 @@ export default function InvoiceDetailPage() {
                     {/* DELETE: Shown ONLY on Draft invoices */}
                     {invoice.status === 'Draft' && (
                         <button
-                            onClick={deleteInvoice}
+                            onClick={() => setActiveModal('delete')}
                             disabled={working}
                             className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg border border-red-200 transition-colors flex items-center gap-1 shadow-xs"
                             title="Delete Draft Invoice"
@@ -324,6 +305,69 @@ export default function InvoiceDetailPage() {
                     </div>
                 )}
             </div>
+
+            {/* In-App Confirmation Modal */}
+            {invoice && (
+                <ConfirmationModal
+                    isOpen={activeModal !== null}
+                    onClose={() => !working && setActiveModal(null)}
+                    onConfirm={handleConfirmAction}
+                    isLoading={working}
+                    title={
+                        activeModal === 'cancel'
+                            ? `Cancel Invoice #${invoice.invoiceNumber}?`
+                            : activeModal === 'delete'
+                            ? `Delete Draft Invoice #${invoice.invoiceNumber}?`
+                            : activeModal === 'markPaid'
+                            ? `Mark Invoice #${invoice.invoiceNumber} as Paid?`
+                            : activeModal === 'send'
+                            ? 'Send Invoice to Client?'
+                            : 'Send Payment Reminder?'
+                    }
+                    message={
+                        activeModal === 'cancel' ? (
+                            'This will mark the invoice as Cancelled and remove it from active receivables. This action cannot be undone.'
+                        ) : activeModal === 'delete' ? (
+                            'Are you sure you want to delete this draft? This action is permanent.'
+                        ) : activeModal === 'markPaid' ? (
+                            'This will mark the invoice as Paid and lock it to protect historical revenue ledgers.'
+                        ) : activeModal === 'send' ? (
+                            <span>
+                                An email with the invoice PDF attached will be sent to{' '}
+                                <strong>{invoice.client?.email || 'the client'}</strong>.
+                            </span>
+                        ) : (
+                            <span>
+                                A payment reminder email with invoice details will be sent to{' '}
+                                <strong>{invoice.client?.email || 'the client'}</strong>.
+                            </span>
+                        )
+                    }
+                    confirmText={
+                        activeModal === 'cancel'
+                            ? 'Yes, Cancel Invoice'
+                            : activeModal === 'delete'
+                            ? 'Delete Draft'
+                            : activeModal === 'markPaid'
+                            ? 'Mark as Paid'
+                            : activeModal === 'send'
+                            ? 'Send Email'
+                            : 'Send Reminder'
+                    }
+                    cancelText={
+                        activeModal === 'cancel' ? 'Keep Invoice' : activeModal === 'delete' ? 'Keep Draft' : 'Cancel'
+                    }
+                    confirmVariant={
+                        activeModal === 'cancel'
+                            ? 'warning'
+                            : activeModal === 'delete'
+                            ? 'danger'
+                            : activeModal === 'markPaid'
+                            ? 'primary'
+                            : 'info'
+                    }
+                />
+            )}
         </div>
     );
 }

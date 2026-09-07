@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, FileText, Download, Send, Bell } from 'lucide-react';
 import api from '../services/api';
 import { Invoice, CURRENCY_SYMBOLS } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../context/ToastContext';
 
 const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -47,28 +49,28 @@ export default function InvoicesPage() {
         }
     };
 
-    const sendInvoice = async (id: number) => {
-        if (!confirm('Send this invoice to the client?')) return;
-        setActionId(id);
-        try {
-            await api.post(`/invoices/${id}/send`);
-            alert('Invoice sent successfully!');
-            load(filter);
-        } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed to send.');
-        } finally {
-            setActionId(null);
-        }
-    };
+    const [confirmModal, setConfirmModal] = useState<{
+        type: 'send' | 'remind';
+        invoice: Invoice;
+    } | null>(null);
+    const { toast } = useToast();
 
-    const sendReminder = async (id: number) => {
-        if (!confirm('Send a payment reminder to the client?')) return;
-        setActionId(id);
+    const handleConfirmAction = async () => {
+        if (!confirmModal) return;
+        const { type, invoice } = confirmModal;
+        setActionId(invoice.id);
         try {
-            await api.post(`/invoices/${id}/remind`);
-            alert('Reminder sent!');
+            if (type === 'send') {
+                await api.post(`/invoices/${invoice.id}/send`);
+                toast.success(`Invoice #${invoice.invoiceNumber} sent to ${invoice.clientName} successfully!`);
+                load(filter);
+            } else {
+                await api.post(`/invoices/${invoice.id}/remind`);
+                toast.success(`Payment reminder sent for Invoice #${invoice.invoiceNumber}!`);
+            }
+            setConfirmModal(null);
         } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Failed to send reminder.');
+            toast.error(err.response?.data?.message ?? (type === 'send' ? 'Failed to send invoice.' : 'Failed to send reminder.'));
         } finally {
             setActionId(null);
         }
@@ -165,7 +167,7 @@ export default function InvoicesPage() {
                                             {/* Send Invoice */}
                                             {inv.status !== 'Paid' && (
                                                 <button
-                                                    onClick={() => sendInvoice(inv.id)}
+                                                    onClick={() => setConfirmModal({ type: 'send', invoice: inv })}
                                                     disabled={actionId === inv.id}
                                                     title="Send Invoice"
                                                     className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
@@ -176,7 +178,7 @@ export default function InvoicesPage() {
                                             {/* Send Reminder */}
                                             {(inv.status === 'Sent' || inv.status === 'Overdue') && (
                                                 <button
-                                                    onClick={() => sendReminder(inv.id)}
+                                                    onClick={() => setConfirmModal({ type: 'remind', invoice: inv })}
                                                     disabled={actionId === inv.id}
                                                     title="Send Reminder"
                                                     className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
@@ -191,6 +193,35 @@ export default function InvoicesPage() {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {/* In-App Confirmation Modal */}
+            {confirmModal && (
+                <ConfirmationModal
+                    isOpen={confirmModal !== null}
+                    onClose={() => !actionId && setConfirmModal(null)}
+                    onConfirm={handleConfirmAction}
+                    isLoading={actionId !== null}
+                    title={
+                        confirmModal.type === 'send'
+                            ? `Send Invoice #${confirmModal.invoice.invoiceNumber}?`
+                            : 'Send Payment Reminder?'
+                    }
+                    message={
+                        confirmModal.type === 'send' ? (
+                            <span>
+                                An email with the invoice PDF attached will be sent to the client (<strong>{confirmModal.invoice.clientName}</strong>).
+                            </span>
+                        ) : (
+                            <span>
+                                A payment reminder email will be sent to <strong>{confirmModal.invoice.clientName}</strong> for Invoice <strong>#{confirmModal.invoice.invoiceNumber}</strong>.
+                            </span>
+                        )
+                    }
+                    confirmText={confirmModal.type === 'send' ? 'Send Email' : 'Send Reminder'}
+                    cancelText="Cancel"
+                    confirmVariant="info"
+                />
             )}
         </div>
     );

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Upload, Trash2, ImageOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 
 export default function SettingsPage() {
@@ -9,6 +11,8 @@ export default function SettingsPage() {
     const [success, setSuccess] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [logoError, setLogoError] = useState('');
+    const [showRemoveLogoModal, setShowRemoveLogoModal] = useState(false);
+    const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [form, setForm] = useState({
@@ -77,12 +81,15 @@ export default function SettingsPage() {
         }
     };
 
-    const handleRemoveLogo = async () => {
-        if (!confirm('Remove your business logo?')) return;
+    const confirmRemoveLogo = async () => {
         setUploadingLogo(true);
         try {
-            await api.delete('/profile/logo');                 // ← was /auth/logo
+            await api.delete('/profile/logo');
             await refreshUser();
+            toast.success('Business logo removed.');
+            setShowRemoveLogoModal(false);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message ?? 'Failed to remove logo.');
         } finally {
             setUploadingLogo(false);
         }
@@ -138,7 +145,7 @@ export default function SettingsPage() {
                         {user?.logoUrl && (
                             <button
                                 type="button"
-                                onClick={handleRemoveLogo}
+                                onClick={() => setShowRemoveLogoModal(true)}
                                 disabled={uploadingLogo}
                                 className="btn-secondary flex items-center gap-2 text-sm text-red-500 hover:bg-red-50"
                             >
@@ -218,6 +225,19 @@ export default function SettingsPage() {
                     )}
                 </div>
             </div>
+
+            {/* In-App Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={showRemoveLogoModal}
+                onClose={() => !uploadingLogo && setShowRemoveLogoModal(false)}
+                onConfirm={confirmRemoveLogo}
+                isLoading={uploadingLogo}
+                title="Remove Business Logo?"
+                message="Are you sure you want to remove your business logo? This will remove it from future generated invoices."
+                confirmText="Remove Logo"
+                cancelText="Cancel"
+                confirmVariant="danger"
+            />
         </div>
     );
 }

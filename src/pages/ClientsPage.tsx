@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, Pencil, Users, Mail, Phone } from 'lucide-react';
 import api from '../services/api';
 import { Client } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../context/ToastContext';
 
 const emptyForm = { name: '', email: '', phone: '', address: '' };
 
@@ -12,6 +14,10 @@ export default function ClientsPage() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(emptyForm);
+
+    const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const { toast } = useToast();
 
     const load = () => {
         api.get('/clients').then(r => setClients(r.data)).finally(() => setLoading(false));
@@ -29,9 +35,9 @@ export default function ClientsPage() {
         setEditingId(client.id);
         setForm({
             name: client.name,
-            email: client.email ?? '',
-            phone: client.phone ?? '',
-            address: client.address ?? '',
+            email: client.email || '',
+            phone: client.phone || '',
+            address: client.address || ''
         });
         setShowForm(true);
     };
@@ -48,23 +54,32 @@ export default function ClientsPage() {
         try {
             if (editingId) {
                 await api.put(`/clients/${editingId}`, form);
+                toast.success('Client updated successfully.');
             } else {
                 await api.post('/clients', form);
+                toast.success('Client created successfully.');
             }
             closeForm();
             load();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message ?? 'Failed to save client.');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('Delete this client?')) return;
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
         try {
-            await api.delete(`/clients/${id}`);
-            setClients(c => c.filter(x => x.id !== id));
+            await api.delete(`/clients/${deleteTarget.id}`);
+            setClients(c => c.filter(x => x.id !== deleteTarget.id));
+            toast.success(`Client "${deleteTarget.name}" deleted successfully.`);
+            setDeleteTarget(null);
         } catch (err: any) {
-            alert(err.response?.data?.message ?? 'Cannot delete client.');
+            toast.error(err.response?.data?.message ?? 'Cannot delete client.');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -169,7 +184,7 @@ export default function ClientsPage() {
                                     <Pencil size={16} />
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(client.id)}
+                                    onClick={() => setDeleteTarget(client)}
                                     className="text-gray-400 hover:text-red-500 transition-colors"
                                     title="Delete client"
                                 >
@@ -179,6 +194,25 @@ export default function ClientsPage() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* In-App Confirmation Modal */}
+            {deleteTarget && (
+                <ConfirmationModal
+                    isOpen={deleteTarget !== null}
+                    onClose={() => !deleting && setDeleteTarget(null)}
+                    onConfirm={confirmDelete}
+                    isLoading={deleting}
+                    title={`Delete Client "${deleteTarget.name}"?`}
+                    message={
+                        <span>
+                            Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action cannot be undone.
+                        </span>
+                    }
+                    confirmText="Delete Client"
+                    cancelText="Cancel"
+                    confirmVariant="danger"
+                />
             )}
         </div>
     );

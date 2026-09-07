@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { Client, CURRENCY_OPTIONS, CURRENCY_SYMBOLS } from '../types';
+import { useToast } from '../context/ToastContext';
 
 interface LineItem { 
   description: string; 
@@ -23,6 +24,7 @@ const TAX_RATE_OPTIONS = [
 
 export default function CreateInvoicePage() {
   const navigate  = useNavigate();
+  const { toast } = useToast();
   const [clients, setClients]     = useState<Client[]>([]);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState('');
@@ -64,7 +66,7 @@ export default function CreateInvoicePage() {
     const trimmed = colName.trim();
     if (!trimmed || customColumns.includes(trimmed)) return;
     if (customColumns.length >= 8) {
-      alert('Maximum 8 custom columns allowed to preserve printability and PDF formatting.');
+      toast.warning('Maximum 8 custom columns allowed to preserve printability and PDF formatting.');
       return;
     }
     setCustomColumns(cols => [...cols, trimmed]);

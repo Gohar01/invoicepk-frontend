@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, ArrowLeft, Send } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import api from '../services/api';
 import { Client, CURRENCY_OPTIONS, CURRENCY_SYMBOLS, InvoiceDetail } from '../types';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../context/ToastContext';
 
 interface LineItem { 
   description: string; 
@@ -24,6 +26,7 @@ const TAX_RATE_OPTIONS = [
 export default function EditInvoicePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [clients, setClients]         = useState<Client[]>([]);
   const [loading, setLoading]         = useState(true);
   const [saving, setSaving]           = useState(false);
@@ -94,8 +97,8 @@ export default function EditInvoicePage() {
       const inv: InvoiceDetail = invoiceRes.data;
 
       if (inv.status === 'Paid' || inv.status === 'Cancelled') {
-        alert(`Cannot edit a ${inv.status.toLowerCase()} invoice.`);
-        navigate(`/invoices/${id}`);
+        toast.warning(`Cannot edit a ${inv.status.toLowerCase()} invoice.`);
+        navigate(`/invoices/${id}`, { replace: true });
         return;
       }
 
@@ -217,7 +220,7 @@ export default function EditInvoicePage() {
     const trimmed = colName.trim();
     if (!trimmed || customColumns.includes(trimmed)) return;
     if (customColumns.length >= 8) {
-      alert('Maximum 8 custom columns allowed to preserve printability and PDF formatting.');
+      toast.warning('Maximum 8 custom columns allowed to preserve printability and PDF formatting.');
       return;
     }
     setCustomColumns(cols => [...cols, trimmed]);
@@ -434,10 +437,10 @@ export default function EditInvoicePage() {
     setSendingEmail(true);
     try {
       await api.post(`/invoices/${id}/send`);
-      alert('Updated invoice sent to client!');
+      toast.success('Updated invoice sent to client successfully!');
       navigate(`/invoices/${id}`);
     } catch (err: any) {
-      alert(err.response?.data?.message ?? 'Failed to send email.');
+      toast.error(err.response?.data?.message ?? 'Failed to send email.');
     } finally {
       setSendingEmail(false);
       setShowSendModal(false);
@@ -824,33 +827,24 @@ export default function EditInvoicePage() {
       </form>
 
       {/* Post-Edit Send Email Modal */}
-      {showSendModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">Send Updated Copy to Client?</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Invoice <strong>#{savedInvoiceNumber}</strong> has been updated. Would you like to email the updated invoice PDF copy to <strong>{clientEmail}</strong> now?
-            </p>
-            <div className="flex gap-3 justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => navigate(`/invoices/${id}`)}
-                className="btn-secondary text-sm"
-              >
-                No, Just Save
-              </button>
-              <button
-                type="button"
-                onClick={handleSendEmailPrompt}
-                disabled={sendingEmail}
-                className="btn-primary text-sm flex items-center gap-1.5 font-bold"
-              >
-                <Send size={15} /> {sendingEmail ? 'Sending...' : 'Yes, Send Email'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showSendModal}
+        onClose={() => {
+          setShowSendModal(false);
+          navigate(`/invoices/${id}`);
+        }}
+        onConfirm={handleSendEmailPrompt}
+        isLoading={sendingEmail}
+        title="Send Updated Copy to Client?"
+        message={
+          <span>
+            Invoice <strong>#{savedInvoiceNumber}</strong> has been updated. Would you like to email the updated invoice PDF copy to <strong>{clientEmail}</strong> now?
+          </span>
+        }
+        confirmText="Yes, Send Email"
+        cancelText="No, Just Save"
+        confirmVariant="info"
+      />
     </div>
   );
 }
