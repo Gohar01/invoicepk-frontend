@@ -385,6 +385,7 @@ export default function CreateInvoicePage() {
             <label className="label">Notes</label>
             <input
               className="input" placeholder="Payment terms, bank details..."
+              maxLength={500}
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             />
@@ -573,6 +574,7 @@ export default function CreateInvoicePage() {
                         <input
                           className={`input text-xs py-1 px-2 ${itemErrors[idx] ? 'border-red-400' : ''}`}
                           placeholder="Service / Product Description"
+                          maxLength={1000}
                           value={item.description}
                           onChange={e => updateItem(idx, 'description', e.target.value)}
                           required={includeDescription}
@@ -580,17 +582,24 @@ export default function CreateInvoicePage() {
                       </td>
                     )}
 
-                    {customColumns.map(col => (
-                      <td key={col} className="py-2 px-2">
-                        <input
-                          type="text"
-                          className="input text-xs py-1 px-2"
-                          placeholder={`Enter ${col}`}
-                          value={item.customValues?.[col] || ''}
-                          onChange={e => updateCustomFieldValue(idx, col, e.target.value)}
-                        />
-                      </td>
-                    ))}
+                    {customColumns.map(col => {
+                      const isQty = /^(qty|quantity|hours)$/i.test(col.trim());
+                      const isPrice = /^(price|unit\s*price|rate)$/i.test(col.trim());
+                      const isNumeric = isQty || isPrice;
+                      return (
+                        <td key={col} className="py-2 px-2">
+                          <input
+                            type={isNumeric ? "number" : "text"}
+                            step={isNumeric ? "any" : undefined}
+                            min={isNumeric ? "0.01" : undefined}
+                            className="input text-xs py-1 px-2"
+                            placeholder={`Enter ${col}`}
+                            value={item.customValues?.[col] || ''}
+                            onChange={e => updateCustomFieldValue(idx, col, e.target.value)}
+                          />
+                        </td>
+                      );
+                    })}
 
                     <td className="py-2 px-2 text-right">
                       <input

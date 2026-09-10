@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import PhoneInput from '../components/PhoneInput';
 import api from '../services/api';
 
 export default function LoginPage() {
@@ -75,17 +76,19 @@ export default function LoginPage() {
                                 <div>
                                     <label className="label">Full Name</label>
                                     <input className="input" name="fullName" placeholder="e.g. Ahmed Khan"
-                                        value={form.fullName} onChange={handleChange} required />
+                                        value={form.fullName} onChange={handleChange} maxLength={100} required />
                                 </div>
                                 <div>
                                     <label className="label">Business Name</label>
                                     <input className="input" name="businessName" placeholder="e.g. Khan Digital Services"
-                                        value={form.businessName} onChange={handleChange} />
+                                        value={form.businessName} onChange={handleChange} maxLength={100} />
                                 </div>
                                 <div>
                                     <label className="label">Phone</label>
-                                    <input className="input" name="phone" placeholder="e.g. 0300-1234567"
-                                        value={form.phone} onChange={handleChange} />
+                                    <PhoneInput
+                                        value={form.phone}
+                                        onChange={val => setForm(f => ({ ...f, phone: val }))}
+                                    />
                                 </div>
                             </>
                         )}
@@ -93,7 +96,7 @@ export default function LoginPage() {
                         <div>
                             <label className="label">Email</label>
                             <input className="input" name="email" type="email" placeholder="you@example.com"
-                                value={form.email} onChange={handleChange} required />
+                                value={form.email} onChange={handleChange} maxLength={100} required />
                         </div>
 
                         <div>
@@ -106,7 +109,7 @@ export default function LoginPage() {
                                 )}
                             </div>
                             <input className="input" name="password" type="password" placeholder="At least 6 characters"
-                                value={form.password} onChange={handleChange} required />
+                                value={form.password} onChange={handleChange} maxLength={100} required />
                         </div>
 
                         <button type="submit" className="btn-primary w-full py-2.5" disabled={loading}>

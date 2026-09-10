@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Download, Send, Bell, ArrowLeft, CheckCircle, Edit3, Trash2, XCircle } from 'lucide-react';
+import { Download, Send, Bell, ArrowLeft, CheckCircle, Edit3, Trash2, XCircle, Eye, Mail, Phone, MapPin } from 'lucide-react';
 import api from '../services/api';
 import { InvoiceDetail, CURRENCY_SYMBOLS } from '../types';
 import ConfirmationModal from '../components/ConfirmationModal';
+import PdfPreviewModal from '../components/PdfPreviewModal';
 import { useToast } from '../context/ToastContext';
 
 const statusBadge = (status: string) => {
@@ -21,6 +22,7 @@ export default function InvoiceDetailPage() {
     const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [working, setWorking] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
     const [activeModal, setActiveModal] = useState<'send' | 'remind' | 'markPaid' | 'cancel' | 'delete' | null>(null);
     const { toast } = useToast();
 
@@ -114,6 +116,14 @@ export default function InvoiceDetailPage() {
                         </button>
                     )}
 
+                    <button
+                        onClick={() => setShowPreview(true)}
+                        disabled={working}
+                        className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs text-primary hover:bg-primary/5 hover:border-primary/30"
+                    >
+                        <Eye size={15} /> Preview
+                    </button>
+
                     <button onClick={downloadPdf} disabled={working} className="btn-secondary flex items-center gap-1.5 text-sm font-medium shadow-xs">
                         <Download size={15} /> PDF
                     </button>
@@ -177,10 +187,27 @@ export default function InvoiceDetailPage() {
                 <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
                         <p className="text-xs text-gray-400 uppercase font-medium mb-2">Bill To</p>
-                        <p className="font-semibold text-gray-900">{invoice.client.name}</p>
-                        {invoice.client.email && <p className="text-sm text-gray-500">{invoice.client.email}</p>}
-                        {invoice.client.phone && <p className="text-sm text-gray-500">{invoice.client.phone}</p>}
-                        {invoice.client.address && <p className="text-sm text-gray-500">{invoice.client.address}</p>}
+                        <p className="font-semibold text-gray-900 mb-1.5">{invoice.client.name}</p>
+                        <div className="space-y-1">
+                            {invoice.client.address && (
+                                <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                                    <MapPin size={13} className="text-gray-400 shrink-0" />
+                                    <span>{invoice.client.address}</span>
+                                </p>
+                            )}
+                            {invoice.client.phone && (
+                                <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                                    <Phone size={13} className="text-gray-400 shrink-0" />
+                                    <span>{invoice.client.phone}</span>
+                                </p>
+                            )}
+                            {invoice.client.email && (
+                                <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                                    <Mail size={13} className="text-gray-400 shrink-0" />
+                                    <span>{invoice.client.email}</span>
+                                </p>
+                            )}
+                        </div>
                     </div>
                     <div className="text-right">
                         <div className="space-y-1">
@@ -368,6 +395,14 @@ export default function InvoiceDetailPage() {
                     }
                 />
             )}
+
+            {/* PDF Preview Modal */}
+            <PdfPreviewModal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                invoiceId={id || null}
+                invoiceNumber={invoice.invoiceNumber}
+            />
         </div>
     );
 }

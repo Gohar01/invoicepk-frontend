@@ -3,6 +3,7 @@ import { Plus, Trash2, Pencil, Users, Mail, Phone } from 'lucide-react';
 import api from '../services/api';
 import { Client } from '../types';
 import ConfirmationModal from '../components/ConfirmationModal';
+import PhoneInput from '../components/PhoneInput';
 import { useToast } from '../context/ToastContext';
 
 const emptyForm = { name: '', email: '', phone: '', address: '' };
@@ -112,21 +113,27 @@ export default function ClientsPage() {
                         <div>
                             <label className="label">Name *</label>
                             <input className="input" placeholder="e.g. ABC Traders"
+                                maxLength={100}
                                 value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required />
                         </div>
                         <div>
                             <label className="label">Email</label>
                             <input className="input" type="email" placeholder="client@email.com"
+                                maxLength={100}
                                 value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                         </div>
                         <div>
                             <label className="label">Phone</label>
-                            <input className="input" placeholder="0321-1234567"
-                                value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                            <PhoneInput
+                                value={form.phone}
+                                onChange={val => setForm(f => ({ ...f, phone: val }))}
+                                allowMultiple={true}
+                            />
                         </div>
                         <div>
                             <label className="label">Address</label>
                             <input className="input" placeholder="Karachi, Pakistan"
+                                maxLength={250}
                                 value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
                         <div className="col-span-2 flex gap-3 justify-end">

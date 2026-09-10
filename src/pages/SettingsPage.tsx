@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Upload, Trash2, ImageOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ConfirmationModal from '../components/ConfirmationModal';
+import PhoneInput from '../components/PhoneInput';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 
@@ -40,10 +41,18 @@ export default function SettingsPage() {
         setSaving(true);
         setSuccess(false);
         try {
-            await api.put('/profile', form);                 // ← was /auth/profile
+            await api.put('/profile', form);
             await refreshUser();
             setSuccess(true);
+            toast.success('Settings saved successfully!');
             setTimeout(() => setSuccess(false), 3000);
+        } catch (err: any) {
+            const errData = err.response?.data;
+            const validationMsg = errData?.errors?.Phone?.[0]
+                || (errData?.errors && (Object.values(errData.errors)[0] as string[]))?.[0]
+                || errData?.message
+                || 'Failed to save settings.';
+            toast.error(validationMsg);
         } finally {
             setSaving(false);
         }
@@ -172,23 +181,30 @@ export default function SettingsPage() {
                         <div>
                             <label className="label">Full Name</label>
                             <input className="input" value={form.fullName}
+                                maxLength={100}
                                 onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))} />
                         </div>
                         <div>
                             <label className="label">Business Name</label>
                             <input className="input" placeholder="Your company name"
+                                maxLength={100}
                                 value={form.businessName}
                                 onChange={e => setForm(f => ({ ...f, businessName: e.target.value }))} />
                         </div>
                         <div>
                             <label className="label">Phone</label>
-                            <input className="input" placeholder="0315-5972494"
+                            <PhoneInput
                                 value={form.phone}
-                                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+                                onChange={val => setForm(f => ({ ...f, phone: val }))}
+                                allowMultiple={true}
+                            />
                         </div>
                         <div>
                             <label className="label">NTN Number</label>
-                            <input className="input" placeholder="1234567-8"
+                            <input className="input" placeholder="1234567-8 or 8 digits"
+                                maxLength={20}
+                                pattern="^(\d{7}-?\d|\d{8})?$"
+                                title="NTN must be in format 1234567-8 or 8 digits."
                                 value={form.ntn}
                                 onChange={e => setForm(f => ({ ...f, ntn: e.target.value }))} />
                         </div>
@@ -196,6 +212,7 @@ export default function SettingsPage() {
                     <div>
                         <label className="label">Business Address</label>
                         <input className="input" placeholder="Office #1, Main Street, Karachi"
+                            maxLength={250}
                             value={form.address}
                             onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                     </div>

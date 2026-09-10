@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Download, Send, Bell } from 'lucide-react';
+import { Plus, FileText, Download, Send, Bell, Eye } from 'lucide-react';
 import api from '../services/api';
 import { Invoice, CURRENCY_SYMBOLS } from '../types';
 import ConfirmationModal from '../components/ConfirmationModal';
+import PdfPreviewModal from '../components/PdfPreviewModal';
 import { useToast } from '../context/ToastContext';
 
 const statusBadge = (status: string) => {
@@ -22,6 +23,7 @@ export default function InvoicesPage() {
     const [filter, setFilter] = useState('All');
     const [loading, setLoading] = useState(true);
     const [actionId, setActionId] = useState<number | null>(null);
+    const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
     const navigate = useNavigate();
 
     const load = (status?: string) => {
@@ -155,6 +157,15 @@ export default function InvoicesPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-end gap-2">
+                                            {/* Preview PDF */}
+                                            <button
+                                                onClick={() => setPreviewInvoice(inv)}
+                                                disabled={actionId === inv.id}
+                                                title="Preview Invoice PDF"
+                                                className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary-light rounded-lg transition-colors"
+                                            >
+                                                <Eye size={15} />
+                                            </button>
                                             {/* Download PDF */}
                                             <button
                                                 onClick={() => downloadPdf(inv.id, inv.invoiceNumber)}
@@ -223,6 +234,14 @@ export default function InvoicesPage() {
                     confirmVariant="info"
                 />
             )}
+
+            {/* In-App PDF Preview Modal */}
+            <PdfPreviewModal
+                isOpen={previewInvoice !== null}
+                onClose={() => setPreviewInvoice(null)}
+                invoiceId={previewInvoice?.id ?? null}
+                invoiceNumber={previewInvoice?.invoiceNumber ?? ''}
+            />
         </div>
     );
 }
