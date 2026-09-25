@@ -5,8 +5,9 @@ import api from '../services/api';
 interface PdfPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  invoiceId: number | string | null;
+  invoiceId?: number | string | null;
   invoiceNumber: string;
+  customBlobUrl?: string | null;
 }
 
 export default function PdfPreviewModal({
@@ -14,6 +15,7 @@ export default function PdfPreviewModal({
   onClose,
   invoiceId,
   invoiceNumber,
+  customBlobUrl,
 }: PdfPreviewModalProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -44,22 +46,29 @@ export default function PdfPreviewModal({
   };
 
   useEffect(() => {
-    if (isOpen && invoiceId) {
-      fetchPdf();
-    } else {
-      if (pdfUrl) {
+    if (!isOpen) {
+      if (pdfUrl && !customBlobUrl) {
         URL.revokeObjectURL(pdfUrl);
-        setPdfUrl(null);
       }
+      setPdfUrl(null);
       setError(null);
+      return;
+    }
+
+    if (customBlobUrl) {
+      setPdfUrl(customBlobUrl);
+      setLoading(false);
+      setError(null);
+    } else if (invoiceId) {
+      fetchPdf();
     }
 
     return () => {
-      if (pdfUrl) {
+      if (pdfUrl && !customBlobUrl) {
         URL.revokeObjectURL(pdfUrl);
       }
     };
-  }, [isOpen, invoiceId]);
+  }, [isOpen, invoiceId, customBlobUrl]);
 
   // Handle ESC key to close
   useEffect(() => {

@@ -9,7 +9,8 @@ import {
   FileText,
   Users,
   Settings,
-  Mail
+  Mail,
+  Sparkles
 } from 'lucide-react';
 import dashboardMockup from '../assets/dashboard_mockup.png';
 
@@ -34,6 +35,12 @@ export default function LandingPage() {
           </span>
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+          <button 
+            onClick={() => navigate('/quick-invoice')} 
+            className="text-primary hover:text-white transition-colors font-semibold flex items-center gap-1.5"
+          >
+            <Sparkles size={14} /> Quick Generator
+          </button>
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#solutions" className="hover:text-white transition-colors">Solutions</a>
           <a href="#dashboard-preview" className="hover:text-white transition-colors">Preview</a>
@@ -67,20 +74,23 @@ export default function LandingPage() {
         <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
           Easily generate clean PDF invoices, track paid or unpaid balances by currency, and manage your client directory—built for local and global freelancers, agencies, and small businesses.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
+          <button 
+            onClick={() => navigate('/quick-invoice')} 
+            className="w-full sm:w-auto bg-primary text-slate-950 font-extrabold px-8 py-4 rounded-xl hover:bg-primary-dark hover:scale-[1.03] shadow-[0_0_35px_rgba(0,193,106,0.4)] transition-all flex items-center justify-center gap-2 text-base"
+          >
+            <Sparkles size={18} /> Create Invoice (No Signup Required) ⚡
+          </button>
           <button 
             onClick={() => navigate('/login?signup=true')} 
-            className="w-full sm:w-auto bg-primary text-slate-950 font-bold px-8 py-4 rounded-xl hover:bg-primary-dark hover:scale-[1.03] shadow-[0_0_30px_rgba(0,193,106,0.3)] transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto bg-white/5 border border-white/15 px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-colors flex items-center justify-center gap-2 text-base"
           >
-            Start Invoicing Free <ArrowRight size={18} />
+            Start Free Account <ArrowRight size={18} />
           </button>
-          <a 
-            href="#solutions" 
-            className="w-full sm:w-auto bg-white/5 border border-white/10 px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center justify-center"
-          >
-            Explore Solutions
-          </a>
         </div>
+        <p className="text-xs text-slate-400 mb-14">
+          ✨ Try before signing up • Instant PDF generation • Zero watermark • 100% Free
+        </p>
 
         {/* Dashboard Mockup */}
         <div id="dashboard-preview" className="scroll-mt-28 relative max-w-5xl mx-auto rounded-2xl border border-white/10 bg-slate-900/50 p-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden">

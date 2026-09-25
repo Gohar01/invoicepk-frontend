@@ -12,6 +12,7 @@ import CreateInvoicePage from './pages/CreateInvoicePage';
 import InvoiceDetailPage from './pages/InvoiceDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import LandingPage from './pages/LandingPage';
+import QuickInvoicePage from './pages/QuickInvoicePage';
 
 import EditInvoicePage from './pages/EditInvoicePage';
 
@@ -34,6 +35,8 @@ function AppRoutes() {
       <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login?signup=true" replace />} />
 
       <Route path="/" element={<LandingPage />} />
+      <Route path="/quick-invoice" element={<QuickInvoicePage />} />
+      <Route path="/invoice-generator" element={<QuickInvoicePage />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>
