@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
@@ -17,6 +17,10 @@ import dashboardMockup from '../assets/dashboard_mockup.png';
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'sme' | 'freelancer'>('sme');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "InvoicePK — Free Online Invoice Generator & Billing Software for Pakistan";
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans overflow-x-hidden selection:bg-primary selection:text-black scroll-smooth">

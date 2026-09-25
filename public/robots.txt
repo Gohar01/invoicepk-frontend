@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /quick-invoice
+Allow: /invoice-generator
+Allow: /login
+Disallow: /dashboard
+Disallow: /invoices/
+Disallow: /clients
+Disallow: /settings
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://invoicepk.online/sitemap.xml

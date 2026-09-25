@@ -92,6 +92,11 @@ export default function QuickInvoicePage() {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
+  // Page title for SEO
+  useEffect(() => {
+    document.title = "Free Instant Invoice Generator (No Signup Required) — InvoicePK";
+  }, []);
+
   // Sync user info if logged in
   useEffect(() => {
     if (user) {
