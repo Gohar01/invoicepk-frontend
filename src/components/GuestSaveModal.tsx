@@ -9,6 +9,7 @@ import PhoneInput from './PhoneInput';
 interface GuestSaveModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isPostDownload?: boolean;
   guestData: {
     businessName: string;
     fullName?: string;
@@ -38,7 +39,7 @@ interface GuestSaveModalProps {
   };
 }
 
-export default function GuestSaveModal({ isOpen, onClose, guestData }: GuestSaveModalProps) {
+export default function GuestSaveModal({ isOpen, onClose, isPostDownload = false, guestData }: GuestSaveModalProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -183,16 +184,22 @@ export default function GuestSaveModal({ isOpen, onClose, guestData }: GuestSave
 
           <div className="inline-flex items-center gap-1.5 bg-primary/20 text-primary border border-primary/30 px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2">
             <Sparkles size={12} />
-            <span>1-Click Save & Manage</span>
+            <span>{isPostDownload ? '🎉 Invoice Downloaded Successfully!' : '1-Click Save & Manage'}</span>
           </div>
 
           <h3 className="text-xl font-bold tracking-tight">
-            {mode === 'register' ? 'Save Invoice to Dashboard' : 'Sign In to Save Invoice'}
+            {isPostDownload
+              ? (mode === 'register' ? 'Save Invoice & Track Payment' : 'Sign In to Save Downloaded Invoice')
+              : (mode === 'register' ? 'Save Invoice to Dashboard' : 'Sign In to Save Invoice')}
           </h3>
           <p className="text-xs text-slate-300 mt-1">
-            {mode === 'register'
-              ? 'Create a free account to track payments, re-send PDFs, and manage your clients seamlessly.'
-              : 'Sign in to automatically link this invoice and client to your account.'}
+            {isPostDownload
+              ? (mode === 'register'
+                  ? 'Your PDF was downloaded! Create a free account in 10 seconds to track when this client pays and avoid retyping details next time.'
+                  : 'Sign in to link this downloaded invoice and client directly to your account.')
+              : (mode === 'register'
+                  ? 'Create a free account to track payments, re-send PDFs, and manage your clients seamlessly.'
+                  : 'Sign in to automatically link this invoice and client to your account.')}
           </p>
         </div>
 
@@ -349,7 +356,7 @@ export default function GuestSaveModal({ isOpen, onClose, guestData }: GuestSave
               className="btn-secondary text-xs py-2.5 px-4"
               disabled={submitting}
             >
-              Cancel
+              {isPostDownload ? 'Maybe Later' : 'Cancel'}
             </button>
             <button
               type="submit"

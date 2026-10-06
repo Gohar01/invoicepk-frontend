@@ -91,6 +91,7 @@ export default function QuickInvoicePage() {
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isPostDownload, setIsPostDownload] = useState(false);
 
   // Page title for SEO
   useEffect(() => {
@@ -412,6 +413,14 @@ export default function QuickInvoicePage() {
       a.remove();
       URL.revokeObjectURL(url);
       toast.success('Invoice PDF downloaded!');
+
+      // If guest user, trigger high-converting save modal after download
+      if (!isAuthenticated) {
+        setIsPostDownload(true);
+        setTimeout(() => {
+          setShowSaveModal(true);
+        }, 900);
+      }
     } catch (err: any) {
       console.error('Failed to download invoice:', err);
       toast.error('Could not download PDF. Please try again.');
@@ -456,6 +465,7 @@ export default function QuickInvoicePage() {
     }
 
     // Otherwise, show the high-converting guest save modal
+    setIsPostDownload(false);
     setShowSaveModal(true);
   };
 
@@ -540,6 +550,19 @@ export default function QuickInvoicePage() {
           </p>
         </div>
       </div>
+
+      {/* Quick Value Callout Banner for Guests */}
+      {!isAuthenticated && (
+        <div className="bg-emerald-500/10 border-b border-emerald-500/20 py-2.5 px-4 text-center">
+          <p className="text-xs text-emerald-900 font-medium">
+            💡 <strong>Pro Tip:</strong> Want to track who pays you and save regular clients?{' '}
+            <Link to="/login?signup=true" className="underline font-bold text-emerald-700 hover:text-emerald-800">
+              Create a free account in 30 seconds
+            </Link>{' '}
+            or download your instant guest invoice below.
+          </p>
+        </div>
+      )}
 
       {/* Main Form Container */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-6">
@@ -1208,6 +1231,7 @@ export default function QuickInvoicePage() {
       <GuestSaveModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
+        isPostDownload={isPostDownload}
         guestData={guestDataForModal}
       />
     </div>
