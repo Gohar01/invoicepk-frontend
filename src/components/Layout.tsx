@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, HelpCircle, Mail, ExternalLink, X } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, HelpCircle, Mail, ExternalLink, X, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
@@ -58,6 +58,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         Help &amp; Support
                     </button>
                 </nav>
+
+                {/* Pro Upgrade Card in Sidebar */}
+                <div className="mx-3 my-2 p-3 rounded-xl bg-gradient-to-br from-emerald-500/10 via-primary/10 to-amber-500/10 border border-primary/30 text-center">
+                    <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-gray-900 mb-1">
+                        <Sparkles size={14} className="text-primary-dark" />
+                        <span>InvoicePK Pro</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mb-2">Lifetime access for Rs. 2,999</p>
+                    <button
+                        onClick={() => navigate('/pricing')}
+                        className="w-full py-1.5 px-2 bg-primary hover:bg-primary-dark text-slate-950 font-bold text-xs rounded-lg transition-all shadow-xs flex items-center justify-center gap-1"
+                    >
+                        <Zap size={12} /> Upgrade to Pro
+                    </button>
+                </div>
 
                 {/* User + Logout */}
                 <div className="p-3 border-t border-gray-100">

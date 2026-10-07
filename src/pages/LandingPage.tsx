@@ -45,6 +45,12 @@ export default function LandingPage() {
           >
             <Sparkles size={14} /> Quick Generator
           </button>
+          <button 
+            onClick={() => navigate('/pricing')} 
+            className="text-amber-400 hover:text-white transition-colors font-semibold flex items-center gap-1"
+          >
+            Pricing &amp; Pro
+          </button>
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#solutions" className="hover:text-white transition-colors">Solutions</a>
           <a href="#dashboard-preview" className="hover:text-white transition-colors">Preview</a>

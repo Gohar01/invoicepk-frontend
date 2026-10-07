@@ -509,6 +509,13 @@ export default function QuickInvoicePage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              to="/pricing"
+              className="text-xs sm:text-sm font-bold text-amber-400 hover:text-amber-300 px-2.5 py-1 rounded-md bg-amber-400/10 border border-amber-400/20 transition-all flex items-center gap-1"
+            >
+              👑 Pro Plans
+            </Link>
+
             {isAuthenticated ? (
               <button
                 onClick={() => navigate('/dashboard')}
@@ -683,6 +690,15 @@ export default function QuickInvoicePage() {
                     <Upload size={14} /> Upload Logo (PNG/JPG)
                   </button>
                 )}
+
+                <div className="mt-2.5 p-2 bg-amber-50/90 border border-amber-200 rounded-xl flex items-center justify-between gap-2 text-[11px]">
+                  <span className="text-amber-800">
+                    👑 Want 100% white-label invoices with zero InvoicePK branding?
+                  </span>
+                  <Link to="/pricing" className="font-bold text-amber-900 underline whitespace-nowrap hover:text-black">
+                    Get Pro &rarr;
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
