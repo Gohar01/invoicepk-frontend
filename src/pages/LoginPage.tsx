@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PhoneInput from '../components/PhoneInput';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 import api from '../services/api';
 
 export default function LoginPage() {
@@ -69,6 +70,19 @@ export default function LoginPage() {
                             {error}
                         </div>
                     )}
+
+                    {/* 1-Tap Google Sign-In */}
+                    <div className="mb-5">
+                        <GoogleAuthButton text={isLogin ? 'Sign in with Google' : 'Sign up with Google'} />
+                        <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-200" />
+                            </div>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="bg-white px-2 text-gray-400">or continue with email</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {!isLogin && (

@@ -691,13 +691,30 @@ export default function QuickInvoicePage() {
                   </button>
                 )}
 
-                <div className="mt-2.5 p-2 bg-amber-50/90 border border-amber-200 rounded-xl flex items-center justify-between gap-2 text-[11px]">
-                  <span className="text-amber-800">
-                    👑 Want 100% white-label invoices with zero InvoicePK branding?
-                  </span>
-                  <Link to="/pricing" className="font-bold text-amber-900 underline whitespace-nowrap hover:text-black">
-                    Get Pro &rarr;
-                  </Link>
+                {/* Soft Paywall & Watermark Toggle */}
+                <div 
+                  onClick={() => navigate('/pricing')}
+                  className="mt-3 p-3 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-slate-50 border border-amber-300 rounded-xl cursor-pointer hover:border-amber-400 transition-all shadow-xs"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        👑
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 leading-tight">
+                          Remove InvoicePK watermark &amp; upload HD logo
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          100% white-label invoices with your verified company stamp
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="relative inline-flex h-5 w-10 flex-shrink-0 items-center rounded-full border-2 border-transparent bg-slate-300 transition-colors">
+                      <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow translate-x-0" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

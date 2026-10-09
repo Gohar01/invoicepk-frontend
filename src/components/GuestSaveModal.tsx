@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import PhoneInput from './PhoneInput';
+import GoogleAuthButton from './GoogleAuthButton';
 
 interface GuestSaveModalProps {
   isOpen: boolean;
@@ -236,6 +237,25 @@ export default function GuestSaveModal({ isOpen, onClose, isPostDownload = false
               {error}
             </div>
           )}
+
+          {/* 1-Tap Google Sign-In */}
+          <div className="pb-1">
+            <GoogleAuthButton 
+              text="Save & Continue with Google (1-Tap)" 
+              onSuccess={() => {
+                onClose();
+                navigate('/dashboard');
+              }}
+            />
+            <div className="relative my-3.5">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-[11px]">
+                <span className="bg-white px-2 text-slate-400">or save with password</span>
+              </div>
+            </div>
+          </div>
 
           {mode === 'register' ? (
             <>

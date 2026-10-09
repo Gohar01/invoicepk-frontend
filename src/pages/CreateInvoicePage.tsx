@@ -279,6 +279,30 @@ export default function CreateInvoicePage() {
           </div>
         )}
 
+        {/* Soft Paywall & Watermark Trigger */}
+        <div 
+          onClick={() => navigate('/pricing')}
+          className="p-4 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-white border border-amber-300 rounded-2xl cursor-pointer hover:border-amber-400 transition-all shadow-xs flex items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+              👑
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 leading-tight">
+                Remove InvoicePK watermark &amp; upload HD logo
+              </p>
+              <p className="text-xs text-slate-500">
+                Upgrade to Pro (Rs. 2,999 Lifetime) for 100% white-label invoices with your verified company stamp.
+              </p>
+            </div>
+          </div>
+
+          <div className="relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border-2 border-transparent bg-slate-300 transition-colors">
+            <span className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow translate-x-0" />
+          </div>
+        </div>
+
         {/* Invoice Details */}
         <div className="card p-5 sm:p-6 space-y-4">
           <div>
