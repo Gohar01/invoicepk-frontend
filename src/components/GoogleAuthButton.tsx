@@ -55,45 +55,18 @@ export default function GoogleAuthButton({
 
         google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            triggerDirectPrompt();
+            setLoading(false);
+            console.warn('Google One Tap prompt skipped or not displayed:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
           }
         });
         return;
       }
 
-      triggerDirectPrompt();
+      toast.error('Google Sign-In service is not loaded. Please try again or sign in with your email and password.');
+      setLoading(false);
     } catch (err: any) {
       console.error('Google Auth Init Error:', err);
       toast.error('Could not initialize Google Sign-In.');
-      setLoading(false);
-    }
-  };
-
-  const triggerDirectPrompt = async () => {
-    const email = window.prompt("Enter your Google Account email for 1-Tap Sign-In:");
-    if (!email || !email.trim()) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const name = email.split('@')[0];
-      const res = await api.post('/auth/google', {
-        email: email.trim(),
-        fullName: name.charAt(0).toUpperCase() + name.slice(1)
-      });
-
-      const profileRes = await api.get('/profile', {
-        headers: { Authorization: `Bearer ${res.data.token}` }
-      });
-
-      login(res.data.token, profileRes.data);
-      toast.success('Signed in with Google!');
-      if (onSuccess) onSuccess();
-      else navigate('/dashboard');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Sign in failed.');
-    } finally {
       setLoading(false);
     }
   };
