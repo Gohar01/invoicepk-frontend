@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import api from '../services/api';
 
 export default function PricingPage() {
   const navigate = useNavigate();
@@ -46,25 +47,46 @@ export default function PricingPage() {
 
   const handleWhatsAppDirect = () => {
     const planText = billingCycle === 'lifetime' ? 'Lifetime Early Adopter Deal (Rs. 2,999)' : 'Pro Monthly Plan (Rs. 999/mo)';
+    const trxInfo = transactionId.trim() ? ` My Transaction ID is: ${transactionId.trim()}.` : '';
     const text = encodeURIComponent(
-      `Assalam-o-Alaikum! I want to activate InvoicePK ${planText} for my business: "${senderName || 'My Business'}". Please assist me with activation.`
+      `Assalam-o-Alaikum! I want to activate InvoicePK ${planText}.${trxInfo} Business: "${senderName || 'My Business'}". Phone: "${senderPhone || ''}". Please assist me with activation.`
     );
-    window.open(`https://wa.me/923000000000?text=${text}`, '_blank');
+    window.open(`https://wa.me/923135118742?text=${text}`, '_blank');
   };
 
-  const handleProofSubmit = (e: React.FormEvent) => {
+  const handleProofSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!senderName.trim()) {
+      toast.warning('Please enter your Business Name or Account Email.');
+      return;
+    }
     if (!transactionId.trim()) {
       toast.warning('Please enter your Transaction ID / Reference Number.');
       return;
     }
+
     setSubmittingProof(true);
-    // Simulate activation submission
-    setTimeout(() => {
-      setSubmittingProof(false);
+    try {
+      const amount = billingCycle === 'lifetime' ? 2999 : 999;
+      const planName = billingCycle === 'lifetime' ? 'Lifetime Pro' : 'Pro Monthly';
+
+      await api.post('/payments/proof', {
+        senderName: senderName.trim(),
+        senderPhone: senderPhone.trim() || null,
+        accountEmail: senderName.includes('@') ? senderName.trim() : (user?.email || null),
+        transactionId: transactionId.trim(),
+        plan: planName,
+        amount: amount
+      });
+
       setProofSubmitted(true);
       toast.success('Payment proof received! Our team will verify and activate your Pro status within 2 hours.');
-    }, 1200);
+    } catch (err: any) {
+      console.error('Payment proof submission error:', err);
+      toast.error(err.response?.data?.message || 'Could not submit payment proof. Please WhatsApp us directly.');
+    } finally {
+      setSubmittingProof(false);
+    }
   };
 
   return (
@@ -345,20 +367,55 @@ export default function PricingPage() {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-6 text-xs">
               {proofSubmitted ? (
-                <div className="text-center py-8 space-y-3">
+                <div className="text-center py-6 space-y-4">
                   <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-primary mx-auto flex items-center justify-center font-bold">
                     <CheckCircle2 size={32} />
                   </div>
-                  <h4 className="text-lg font-bold text-white">Payment Proof Submitted!</h4>
-                  <p className="text-slate-300 max-w-sm mx-auto">
-                    Thank you! Our team is reviewing your transaction. Your account will be upgraded to <strong>InvoicePK Pro</strong> shortly.
+                  <div>
+                    <h4 className="text-lg font-bold text-white">Payment Proof Submitted!</h4>
+                    <p className="text-slate-400 text-xs mt-1">Our team has received your transaction details.</p>
+                  </div>
+
+                  <div className="bg-slate-950 border border-white/10 rounded-2xl p-4 text-left max-w-sm mx-auto space-y-2 text-xs">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
+                      <span className="text-slate-400">Transaction ID:</span>
+                      <span className="font-mono font-bold text-emerald-400">{transactionId}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-white/5 pb-1.5">
+                      <span className="text-slate-400">Plan:</span>
+                      <span className="font-bold text-white">{billingCycle === 'lifetime' ? 'Lifetime Pro (PKR 2,999)' : 'Pro Monthly (PKR 999)'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Contact / Business:</span>
+                      <span className="text-slate-200 truncate max-w-[180px]">{senderName}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-slate-300 max-w-sm mx-auto text-xs leading-relaxed">
+                    Want immediate activation? Tap below to send your payment screenshot directly to our WhatsApp support line:
                   </p>
-                  <button
-                    onClick={() => { setShowPaymentModal(false); navigate('/dashboard'); }}
-                    className="btn-primary py-2.5 px-6 font-bold text-xs"
-                  >
-                    Go to Dashboard
-                  </button>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const planText = billingCycle === 'lifetime' ? 'Lifetime Early Adopter Deal (Rs. 2,999)' : 'Pro Monthly Plan (Rs. 999/mo)';
+                        const text = encodeURIComponent(
+                          `Assalam-o-Alaikum! I have submitted payment proof for InvoicePK ${planText}. My Transaction ID is: ${transactionId}. Business: "${senderName}". Please verify and activate my account.`
+                        );
+                        window.open(`https://wa.me/923135118742?text=${text}`, '_blank');
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs w-full sm:w-auto"
+                    >
+                      <MessageCircle size={15} /> Send Screenshot on WhatsApp
+                    </button>
+                    <button
+                      onClick={() => { setShowPaymentModal(false); navigate('/dashboard'); }}
+                      className="bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-4 rounded-xl font-bold text-xs w-full sm:w-auto"
+                    >
+                      Go to Dashboard
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
