@@ -30,6 +30,11 @@ export default function PricingPage() {
   const [submittingProof, setSubmittingProof] = useState(false);
   const [proofSubmitted, setProofSubmitted] = useState(false);
 
+  const supportWhatsApp = import.meta.env.VITE_SUPPORT_WHATSAPP || '923155972494';
+  const raastNumber = import.meta.env.VITE_RAAST_ID || '03155972494';
+  const accountTitle = import.meta.env.VITE_ACCOUNT_TITLE || 'GOHAR REHMAN';
+  const bankName = import.meta.env.VITE_BANK_NAME || 'NayaPay / Raast Instant Transfer';
+
   useEffect(() => {
     document.title = "Pricing & Pro Plans — InvoicePK";
   }, []);
@@ -51,7 +56,7 @@ export default function PricingPage() {
     const text = encodeURIComponent(
       `Assalam-o-Alaikum! I want to activate InvoicePK ${planText}.${trxInfo} Business: "${senderName || 'My Business'}". Phone: "${senderPhone || ''}". Please assist me with activation.`
     );
-    window.open(`https://wa.me/923135118742?text=${text}`, '_blank');
+    window.open(`https://wa.me/${supportWhatsApp}?text=${text}`, '_blank');
   };
 
   const handleProofSubmit = async (e: React.FormEvent) => {
@@ -403,7 +408,7 @@ export default function PricingPage() {
                         const text = encodeURIComponent(
                           `Assalam-o-Alaikum! I have submitted payment proof for InvoicePK ${planText}. My Transaction ID is: ${transactionId}. Business: "${senderName}". Please verify and activate my account.`
                         );
-                        window.open(`https://wa.me/923135118742?text=${text}`, '_blank');
+                        window.open(`https://wa.me/${supportWhatsApp}?text=${text}`, '_blank');
                       }}
                       className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-xs w-full sm:w-auto"
                     >
@@ -423,21 +428,21 @@ export default function PricingPage() {
                   <div className="bg-slate-950 border border-white/10 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-slate-400 font-medium">Bank / EMI:</span>
-                      <span className="font-bold text-white">NayaPay / Raast Instant Transfer</span>
+                      <span className="font-bold text-white">{bankName}</span>
                     </div>
 
                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-slate-400 font-medium">Account Title:</span>
-                      <span className="font-bold text-white">GOHAR REHMAN</span>
+                      <span className="font-bold text-white">{accountTitle}</span>
                     </div>
 
                     <div className="flex items-center justify-between border-b border-white/5 pb-2">
                       <span className="text-slate-400 font-medium">Raast ID / Mobile:</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-emerald-400">03135118742</span>
+                        <span className="font-mono font-bold text-emerald-400">{raastNumber}</span>
                         <button
                           type="button"
-                          onClick={() => copyToClipboard('03135118742', 'Raast ID')}
+                          onClick={() => copyToClipboard(raastNumber, 'Raast ID')}
                           className="text-slate-400 hover:text-white"
                           title="Copy Raast ID"
                         >
