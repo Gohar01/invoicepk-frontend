@@ -24,8 +24,15 @@ export default function GoogleAuthButton({
     setLoading(true);
 
     try {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+      if (!clientId || clientId.includes('placeholder')) {
+        setLoading(false);
+        toast.info('Google Sign-In is currently being configured. Please sign in or register with your email and password.');
+        return;
+      }
+
       const google = (window as any).google;
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1048293749281-placeholder.apps.googleusercontent.com';
 
       if (google?.accounts?.id) {
         google.accounts.id.initialize({
@@ -56,7 +63,8 @@ export default function GoogleAuthButton({
         google.accounts.id.prompt((notification: any) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             setLoading(false);
-            console.warn('Google One Tap prompt skipped or not displayed:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+            const reason = notification.getNotDisplayedReason?.() || notification.getSkippedReason?.();
+            console.warn('Google One Tap prompt not displayed:', reason);
           }
         });
         return;
