@@ -14,7 +14,8 @@ import {
   Truck, 
   Store, 
   Briefcase, 
-  Building2
+  Building2,
+  ExternalLink
 } from 'lucide-react';
 import api from '../services/api';
 import { CURRENCY_OPTIONS, CURRENCY_SYMBOLS } from '../types';
@@ -92,6 +93,20 @@ export default function QuickInvoicePage() {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isPostDownload, setIsPostDownload] = useState(false);
+  const isPro = user?.plan?.toLowerCase() === 'pro';
+
+  // Protect against accidental navigation / tab closure when user has entered invoice data
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = items.some(i => i.description.trim() || i.amount > 0) || clientName.trim() || (businessName.trim() && businessName !== user?.businessName);
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [items, clientName, businessName, user]);
 
   // Page title for SEO
   useEffect(() => {
@@ -691,31 +706,57 @@ export default function QuickInvoicePage() {
                   </button>
                 )}
 
-                {/* Soft Paywall & Watermark Toggle */}
-                <div 
-                  onClick={() => navigate('/pricing')}
-                  className="mt-3 p-3 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-slate-50 border border-amber-300 rounded-xl cursor-pointer hover:border-amber-400 transition-all shadow-xs"
-                >
-                  <div className="flex items-center justify-between gap-3">
+                {/* Soft Paywall & Watermark Trigger */}
+                {isPro ? (
+                  <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between shadow-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                        👑
+                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        <Check size={13} />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-slate-900 leading-tight">
-                          Remove InvoicePK watermark &amp; upload HD logo
+                        <p className="text-xs font-bold text-emerald-900 leading-tight">
+                          Pro Active — 100% White-Label
                         </p>
-                        <p className="text-[10px] text-slate-500">
-                          100% white-label invoices with your verified company stamp
+                        <p className="text-[10px] text-emerald-600">
+                          InvoicePK watermark is removed from all your PDF exports.
                         </p>
                       </div>
                     </div>
+                    <span className="text-[10px] font-bold bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full">
+                      PRO
+                    </span>
+                  </div>
+                ) : (
+                  <div 
+                    onClick={() => {
+                      toast.info('Opening pricing in a new tab so your draft is preserved.');
+                      window.open('/pricing', '_blank');
+                    }}
+                    className="mt-3 p-3 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-slate-50 border border-amber-300 rounded-xl cursor-pointer hover:border-amber-400 transition-all shadow-xs"
+                    title="View Pro Plans (opens in new tab)"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                          👑
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1.5">
+                            <span>Remove InvoicePK watermark</span>
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-extrabold px-1.5 py-0.2 rounded border border-amber-200">PRO</span>
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            100% white-label invoices with your verified company stamp
+                          </p>
+                        </div>
+                      </div>
 
-                    <div className="relative inline-flex h-5 w-10 flex-shrink-0 items-center rounded-full border-2 border-transparent bg-slate-300 transition-colors">
-                      <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow translate-x-0" />
+                      <span className="text-[11px] font-bold text-amber-800 hover:text-amber-900 flex items-center gap-1 whitespace-nowrap bg-white border border-amber-200 px-2 py-1 rounded-lg shadow-2xs">
+                        Upgrade <ExternalLink size={11} />
+                      </span>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

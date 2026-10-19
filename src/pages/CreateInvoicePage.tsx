@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Check, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import { Client, CURRENCY_OPTIONS, CURRENCY_SYMBOLS } from '../types';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 interface LineItem { 
   description: string; 
@@ -25,17 +26,20 @@ const TAX_RATE_OPTIONS = [
 export default function CreateInvoicePage() {
   const navigate  = useNavigate();
   const { toast } = useToast();
-  const [clients, setClients]     = useState<Client[]>([]);
-  const [saving, setSaving]       = useState(false);
-  const [error, setError]         = useState('');
-  const [itemErrors, setItemErrors] = useState<Record<number, string>>({});
-  const [currency, setCurrency]   = useState('PKR');
+  const { user }  = useAuth();
+  const isPro     = user?.plan?.toLowerCase() === 'pro';
+  const [clients, setClients]           = useState<Client[]>([]);
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState('');
+  const [itemErrors, setItemErrors]     = useState<Record<number, string>>({});
+  const [currency, setCurrency]         = useState('PKR');
   const [taxSelection, setTaxSelection] = useState<string>('18');
   const [customRate, setCustomRate]     = useState<number>(0);
   const [customColumns, setCustomColumns] = useState<string[]>([]);
   const [includeDescription, setIncludeDescription] = useState(true);
-  const [newColName, setNewColName]       = useState('');
-  const [showColInput, setShowColInput]   = useState(false);
+  const [newColName, setNewColName]     = useState('');
+  const [showColInput, setShowColInput] = useState(false);
+
   const [form, setForm] = useState({
     clientId: '',
     issueDate: new Date().toISOString().split('T')[0],
@@ -45,6 +49,19 @@ export default function CreateInvoicePage() {
   const [items, setItems] = useState<LineItem[]>([
     { description: '', amount: 0, customValues: {} }
   ]);
+
+  // Protect against accidental navigation / tab closure when user has entered invoice data
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasContent = items.some(i => i.description.trim() || i.amount > 0) || form.clientId !== '' || form.notes !== '';
+      if (hasContent) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [items, form]);
 
   useEffect(() => {
     api.get('/clients').then(r => setClients(r.data));
@@ -280,28 +297,54 @@ export default function CreateInvoicePage() {
         )}
 
         {/* Soft Paywall & Watermark Trigger */}
-        <div 
-          onClick={() => navigate('/pricing')}
-          className="p-4 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-white border border-amber-300 rounded-2xl cursor-pointer hover:border-amber-400 transition-all shadow-xs flex items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-              👑
+        {isPro ? (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                <Check size={16} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-emerald-900 leading-tight">
+                  Pro Plan Active — 100% White-Label
+                </p>
+                <p className="text-xs text-emerald-600">
+                  InvoicePK watermark is removed from all your PDF exports.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-900 leading-tight">
-                Remove InvoicePK watermark &amp; upload HD logo
-              </p>
-              <p className="text-xs text-slate-500">
-                Upgrade to Pro (Rs. 2,999 Lifetime) for 100% white-label invoices with your verified company stamp.
-              </p>
-            </div>
+            <span className="text-xs font-bold bg-emerald-200 text-emerald-800 px-3 py-1 rounded-full">
+              PRO
+            </span>
           </div>
+        ) : (
+          <div 
+            onClick={() => {
+              toast.info('Opening pricing in a new tab so your draft is preserved.');
+              window.open('/pricing', '_blank');
+            }}
+            className="p-4 bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-white border border-amber-300 rounded-2xl cursor-pointer hover:border-amber-400 transition-all shadow-xs flex items-center justify-between gap-4"
+            title="View Pro Plans (opens in new tab)"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                👑
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900 leading-tight flex items-center gap-2">
+                  <span>Remove InvoicePK watermark &amp; upload HD logo</span>
+                  <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-amber-200">PRO</span>
+                </p>
+                <p className="text-xs text-slate-500">
+                  Upgrade to Pro (Rs. 2,999 Lifetime) for 100% white-label invoices with your verified company stamp.
+                </p>
+              </div>
+            </div>
 
-          <div className="relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full border-2 border-transparent bg-slate-300 transition-colors">
-            <span className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow translate-x-0" />
+            <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5 whitespace-nowrap bg-white border border-amber-200 px-3 py-1.5 rounded-xl shadow-2xs">
+              Upgrade <ExternalLink size={13} />
+            </span>
           </div>
-        </div>
+        )}
 
         {/* Invoice Details */}
         <div className="card p-5 sm:p-6 space-y-4">
