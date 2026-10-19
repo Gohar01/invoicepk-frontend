@@ -109,7 +109,7 @@ export default function ClientsPage() {
                     <h2 className="font-semibold text-gray-900 mb-4">
                         {editingId ? 'Edit Client' : 'New Client'}
                     </h2>
-                    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="label">Name *</label>
                             <input className="input" placeholder="e.g. ABC Traders"
@@ -136,7 +136,7 @@ export default function ClientsPage() {
                                 maxLength={250}
                                 value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                         </div>
-                        <div className="col-span-2 flex gap-3 justify-end">
+                        <div className="col-span-1 sm:col-span-2 flex gap-3 justify-end">
                             <button type="button" onClick={closeForm} className="btn-secondary">
                                 Cancel
                             </button>

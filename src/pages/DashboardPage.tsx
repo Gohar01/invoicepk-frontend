@@ -53,7 +53,7 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 uppercase font-medium mb-2">
             Revenue by Currency
           </p>
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(breakdown.length, 3)}, 1fr)` }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {breakdown.map(b => {
               const symbol = CURRENCY_SYMBOLS[b.currency] ?? b.currency;
               return (

@@ -415,10 +415,18 @@ export default function PricingPage() {
                       <MessageCircle size={15} /> Send Screenshot on WhatsApp
                     </button>
                     <button
-                      onClick={() => { setShowPaymentModal(false); navigate('/dashboard'); }}
+                      onClick={() => {
+                        setShowPaymentModal(false);
+                        if (isAuthenticated) {
+                          navigate('/dashboard');
+                        } else {
+                          toast.info('Please log in or sign up with your payment email to access your Pro dashboard.');
+                          navigate('/login');
+                        }
+                      }}
                       className="bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-4 rounded-xl font-bold text-xs w-full sm:w-auto"
                     >
-                      Go to Dashboard
+                      {isAuthenticated ? 'Go to Dashboard' : 'Log In to Dashboard'}
                     </button>
                   </div>
                 </div>

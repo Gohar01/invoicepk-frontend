@@ -131,7 +131,7 @@ export default function CreateInvoicePage() {
       setCustomColumns(['Batch No.', 'Expiry Date', 'SKU']);
     } else if (preset === 'contractor') {
       setIncludeDescription(true);
-      setCustomColumns(['PO Number', 'Location']);
+      setCustomColumns(['PO Number', 'Site Location']);
     } else if (preset === 'services') {
       setIncludeDescription(true);
       setCustomColumns(['Qty', 'Unit Price']);

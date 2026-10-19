@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Settings, LogOut, HelpCircle, Mail, ExternalLink, X, Sparkles, Zap } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Settings, LogOut, HelpCircle, Mail, ExternalLink, X, Sparkles, Zap, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
@@ -14,30 +14,68 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isSupportOpen, setIsSupportOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
+        setMobileMenuOpen(false);
         logout();
         navigate('/login');
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
-            {/* Sidebar */}
-            <aside className="w-56 bg-white border-r border-gray-100 flex flex-col">
-                {/* Logo */}
-                <div className="p-5 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row h-screen bg-gray-50 overflow-hidden">
+            {/* Mobile Top Bar */}
+            <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 shrink-0 z-30">
+                <span className="text-lg font-bold text-gray-900">
+                    Invoice<span className="text-primary">PK</span>
+                </span>
+                <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="p-2 -mr-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Open mobile menu"
+                >
+                    <Menu size={22} />
+                </button>
+            </div>
+
+            {/* Backdrop for Mobile Drawer */}
+            {mobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs md:hidden"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Sidebar / Drawer */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col transition-transform duration-200 ease-in-out md:static md:w-56 md:translate-x-0 ${
+                    mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+            >
+                {/* Logo & Mobile Close Button */}
+                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                     <span className="text-xl font-bold text-gray-900">
                         Invoice<span className="text-primary">PK</span>
                     </span>
+                    <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="md:hidden p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label="Close mobile menu"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
                 {/* Nav */}
-                <nav className="flex-1 p-3 space-y-1">
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {navItems.map(({ to, icon: Icon, label }) => (
                         <NavLink
                             key={to}
                             to={to}
                             end={to === '/dashboard'}
+                            onClick={() => setMobileMenuOpen(false)}
                             className={({ isActive }) =>
                                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
                                     ? 'bg-primary-light text-primary-dark'
@@ -51,7 +89,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     ))}
 
                     <button
-                        onClick={() => setIsSupportOpen(true)}
+                        onClick={() => {
+                            setMobileMenuOpen(false);
+                            setIsSupportOpen(true);
+                        }}
                         className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors text-left"
                     >
                         <HelpCircle size={18} />
@@ -67,7 +108,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                     <p className="text-[11px] text-gray-500 mb-2">Lifetime access for Rs. 2,999</p>
                     <button
-                        onClick={() => navigate('/pricing')}
+                        onClick={() => {
+                            setMobileMenuOpen(false);
+                            navigate('/pricing');
+                        }}
                         className="w-full py-1.5 px-2 bg-primary hover:bg-primary-dark text-slate-950 font-bold text-xs rounded-lg transition-all shadow-xs flex items-center justify-center gap-1"
                     >
                         <Zap size={12} /> Upgrade to Pro
@@ -91,7 +135,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* Main content */}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto min-w-0">
                 {children}
             </main>
 
