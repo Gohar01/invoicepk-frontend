@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Smartphone, 
@@ -415,8 +415,16 @@ export default function LandingPage() {
             <span className="text-slate-600">•</span>
             <span className="text-slate-400">Pakistan's Digital Billing Engine</span>
           </div>
+
+          <div className="flex items-center gap-5 text-slate-400">
+            <Link to="/quick-invoice" className="hover:text-white transition-colors">Free Generator</Link>
+            <Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link to="/login" className="hover:text-white transition-colors">Log In</Link>
+            <Link to="/privacy" className="text-slate-300 hover:text-primary transition-colors">Privacy Policy</Link>
+          </div>
+
           <div>
-            &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved. • Designed &amp; Developed in Pakistan 🇵🇰
+            &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved. • Made in Pakistan 🇵🇰
           </div>
         </div>
       </footer>

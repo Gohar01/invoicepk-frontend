@@ -558,6 +558,29 @@ export default function PricingPage() {
           </div>
         </div>
       )}
+      {/* Footer */}
+      <footer className="border-t border-white/5 bg-slate-950 py-10 text-slate-500 text-xs mt-12">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-white tracking-tight">
+              Invoice<span className="text-primary">PK</span>
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="text-slate-400">Pakistan's Digital Billing Engine</span>
+          </div>
+
+          <div className="flex items-center gap-5 text-slate-400">
+            <Link to="/" className="hover:text-white transition-colors">Home</Link>
+            <Link to="/quick-invoice" className="hover:text-white transition-colors">Invoice Generator</Link>
+            <Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link to="/privacy" className="text-slate-300 hover:text-primary transition-colors">Privacy Policy</Link>
+          </div>
+
+          <div>
+            &copy; {new Date().getFullYear()} InvoicePK. All Rights Reserved. • Made in Pakistan 🇵🇰
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

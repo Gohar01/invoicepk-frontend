@@ -14,6 +14,7 @@ import SettingsPage from './pages/SettingsPage';
 import LandingPage from './pages/LandingPage';
 import QuickInvoicePage from './pages/QuickInvoicePage';
 import PricingPage from './pages/PricingPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
 import EditInvoicePage from './pages/EditInvoicePage';
 
@@ -39,6 +40,8 @@ function AppRoutes() {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/quick-invoice" element={<QuickInvoicePage />} />
       <Route path="/invoice-generator" element={<QuickInvoicePage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>
