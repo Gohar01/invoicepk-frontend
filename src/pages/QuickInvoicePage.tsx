@@ -15,7 +15,8 @@ import {
   Store, 
   Briefcase, 
   Building2,
-  ExternalLink
+  ExternalLink,
+  MessageCircle
 } from 'lucide-react';
 import api from '../services/api';
 import { CURRENCY_OPTIONS, CURRENCY_SYMBOLS } from '../types';
@@ -442,6 +443,42 @@ export default function QuickInvoicePage() {
     } finally {
       setDownloadingPdf(false);
     }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (!validateBasicForm()) return;
+
+    // First trigger PDF download so the user has the file on device to attach
+    await handleDownloadPdf();
+
+    // Clean phone number: remove non-digits, convert 03xx to 923xx
+    let phone = clientPhone.replace(/[^0-9]/g, '');
+    if (phone.startsWith('03')) {
+      phone = '92' + phone.substring(1);
+    }
+
+    const sender = businessName.trim() || fullName.trim() || 'Our Team';
+    const client = clientName.trim() || 'Valued Client';
+    const formattedTotal = `${currencySymbol} ${total.toLocaleString()}`;
+
+    const message = 
+      `Assalam-o-Alaikum ${client},
+
+` +
+      `Here is your invoice from *${sender}* for *${formattedTotal}*.
+` +
+      `📅 Due Date: ${dueDate}
+
+` +
+      `Attached is the official PDF invoice for your review. Please confirm upon receipt.
+
+` +
+      `Generated via https://invoicepk.online`;
+
+    const encodedText = encodeURIComponent(message);
+    const waUrl = phone ? `https://wa.me/${phone}?text=${encodedText}` : `https://wa.me/?text=${encodedText}`;
+
+    window.open(waUrl, '_blank');
   };
 
   const handleSaveAndSend = async () => {
@@ -1273,6 +1310,18 @@ export default function QuickInvoicePage() {
                 <Download size={15} />
               )}
               <span>Download PDF</span>
+            </button>
+
+            {/* 1-Click WhatsApp Share */}
+            <button
+              type="button"
+              onClick={handleShareWhatsApp}
+              disabled={downloadingPdf}
+              className="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 shadow-emerald-600/20"
+              title="Download PDF & share invoice message directly via WhatsApp"
+            >
+              <MessageCircle size={15} />
+              <span>Share WhatsApp</span>
             </button>
 
             {/* Save & Manage / 1-Click Register */}
